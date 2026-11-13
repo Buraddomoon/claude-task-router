@@ -14,6 +14,7 @@ import time
 
 from .config import validate_model
 from .state import launch_model, matches_choice
+from .privacy import installation_lease
 
 MINIMUM_VERSION = (2, 1, 251)
 VALUE_FLAGS = {
@@ -89,6 +90,11 @@ def validate_timeout(extra, timeout):
 
 def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], resume: bool,
         timeout: float | None = None) -> int:
+    with installation_lease():
+        return _run(store, task, binary, prompt, extra, resume, timeout)
+
+
+def _run(store, task, binary, prompt, extra, resume, timeout):
     cwd = Path(task["cwd"])
     if not cwd.is_dir():
         raise ValueError(f"Diretório original não existe: {cwd}. Restaure-o ou use "

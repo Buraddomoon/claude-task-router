@@ -10,6 +10,9 @@ import sys
 import tempfile
 import uuid
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from claude_task_router.privacy import private_file  # noqa: E402
+
 
 def absolute(raw):
     # Do not resolve the active symlink: its name must remain stable on upgrade.
@@ -56,7 +59,7 @@ def install(rollback=False):
     check_command(command, active)
     active.parent.mkdir(parents=True, exist_ok=True)
     # Serialize installers without touching the task database or its locks.
-    with active.with_name(active.name + ".install.lock").open("a") as lock:
+    with os.fdopen(private_file(active.with_name(active.name + ".install.lock")), "a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         check_command(command, active)
         if exists(active) and not (owned(active, active) or legacy(active)):
@@ -118,10 +121,17 @@ def install(rollback=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rollback", action="store_true", help="Reativar a geração anterior sem alterar o banco")
+    operation = parser.add_mutually_exclusive_group()
+    operation.add_argument("--rollback", action="store_true", help="Reativar a geração anterior sem alterar o banco")
+    operation.add_argument("--uninstall", action="store_true", help="Remover somente instalação gerenciada; preservar dados")
+    parser.add_argument("--state-dir", type=Path, help="Estado cujos locks devem ser conferidos na desinstalação")
     args = parser.parse_args()
     try:
-        install(args.rollback)
+        if args.uninstall:
+            from claude_task_router.uninstall import remove_installation
+            print(remove_installation(state_dir=args.state_dir))
+        else:
+            install(args.rollback)
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
         print(f"Instalação não concluída: {exc}", file=sys.stderr)
         return 1

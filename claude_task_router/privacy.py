@@ -1,8 +1,11 @@
 """Private POSIX storage; reject symlinks, hardlinks and special files."""
 
 import os
+from contextlib import contextmanager
+import fcntl
 from pathlib import Path
 import stat
+import sys
 
 
 def private_directory(path):
@@ -30,3 +33,21 @@ def private_file(path, flags=os.O_CREAT | os.O_RDWR):
         os.close(fd)
         raise
     return fd
+
+
+@contextmanager
+def installation_lease():
+    marker = Path(sys.prefix) / ".ctr-install"
+    if not marker.is_file():
+        yield
+        return
+    active = Path(marker.read_text())
+    fd = private_file(active.with_name(active.name + ".install.lock"))
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise ValueError("Instalação em manutenção; tente novamente após concluir atualização/desinstalação.") from exc
+        yield
+    finally:
+        os.close(fd)

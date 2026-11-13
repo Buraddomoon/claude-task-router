@@ -77,6 +77,19 @@ def parser():
     inspection.add_argument("--probe", metavar="MODELO", help="Teste real curto com consumo explícito de IA")
     diagnostics = subs.add_parser("diagnostics", help="Exportar somente estatísticas locais, sem dados privados")
     diagnostics.add_argument("--output", type=Path, help="Criar arquivo novo 0600; padrão stdout")
+    setup = subs.add_parser("setup", help="Criar configuração local validada, sem alterar Claude")
+    setup.add_argument("--min-tier", choices=TIERS)
+    for tier in TIERS:
+        setup.add_argument("--" + tier, metavar="MODELO")
+    setup.add_argument("--force", action="store_true", help="Alterar config existente guardando backup")
+    setup.add_argument("--check-models", action="store_true", help="Validar nomes pelo CLI nativo antes de salvar")
+    backup = subs.add_parser("backup", help="Criar backup SQLite consistente em arquivo novo 0600")
+    backup.add_argument("destination", type=Path)
+    restore = subs.add_parser("restore", help="Restaurar backup somente em diretório de estado novo")
+    restore.add_argument("backup", type=Path)
+    uninstall = subs.add_parser("uninstall", help="Remover instalação gerenciada, preservando estado e Claude")
+    uninstall.add_argument("--venv-dir", type=Path)
+    uninstall.add_argument("--bin-dir", type=Path)
     return p
 
 
@@ -118,7 +131,8 @@ def main(argv=None) -> int:
         argv, extra = argv[:separator], argv[separator + 1:]
     # A bare ctr opens the most recent project task. Explicit commands retain
     # their existing grammar; a single quoted prompt is shorthand for run.
-    commands = {"new", "classify", "run", "resume", "recover", "model", "models", "status", "show", "doctor", "diagnostics"}
+    commands = {"new", "classify", "run", "resume", "recover", "model", "models", "status", "show", "doctor", "diagnostics",
+                "setup", "backup", "restore", "uninstall"}
     index = 0
     while index < len(argv) and argv[index].split("=", 1)[0] in {"--state-dir", "--config", "--claude-bin"}:
         index += 1 if "=" in argv[index] else 2
@@ -159,6 +173,19 @@ def main(argv=None) -> int:
             result, code = inspect_model(args.claude_bin, args.check or args.probe, probe=bool(args.probe))
             dump(result)
             return code
+        if args.command == "setup":
+            from .maintenance import configure
+            dump(configure(args.config, {key: getattr(args, key) for key in (*TIERS, "min_tier")},
+                           args.force, args.claude_bin, args.check_models))
+            return 0
+        if args.command == "restore":
+            from .maintenance import restore_state
+            dump(restore_state(args.backup, args.state_dir or default_state_dir()))
+            return 0
+        if args.command == "uninstall":
+            from .uninstall import remove_installation
+            dump(remove_installation(args.venv_dir, args.bin_dir, args.state_dir))
+            return 0
         if args.command == "diagnostics":
             root = (args.state_dir or default_state_dir()).expanduser()
             result = dict(router_version=__version__, python=platform.python_version(),
@@ -202,6 +229,10 @@ def main(argv=None) -> int:
             with store.task_lock(task["id"]):
                 return run(store, task, binary, prompt, extra, resume=False, timeout=args.timeout)
         store = Store(args.state_dir)
+        if args.command == "backup":
+            from .maintenance import backup_state
+            dump(backup_state(store, args.destination))
+            return 0
         if args.command == "status":
             tasks = store.list_tasks(Path.cwd(), all_projects=args.all)
             if args.json:

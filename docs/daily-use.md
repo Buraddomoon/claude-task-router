@@ -40,12 +40,16 @@ injeta um classificador remoto para tentar adivinhar essas mudanças.
 
 ## Classificação
 
-A política `local-rules-v3` não permite que um prefixo simples desative os
+A política `local-rules-v4` não permite que um prefixo simples desative os
 sinais de risco posteriores. “Corrija o typo para eliminar a vulnerabilidade
 de autorização” recebe advanced; “formate o arquivo removendo os registros
 antigos” não recebe economy. Citações, nomes de arquivo e identificadores
 explícitos continuam diferenciados do trabalho solicitado. Regras continuam
 heurísticas: `classify`, `--model`, `--tier` e `min_tier` ajudam a ajustar.
+
+Restrições comuns de apresentação, como “retorne somente JSON” e “sem outras
+alterações”, não contam sozinhas como trabalho adicional. Ações ou riscos
+adicionais nesses trechos continuam sendo considerados.
 
 O corpus anterior agora é uma regressão fixa, não um conjunto reservado novo
 para esta política. O comando `python3 evaluation/run.py` continua aplicando

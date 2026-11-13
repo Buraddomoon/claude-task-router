@@ -1,6 +1,8 @@
 """End-to-end installer checks. Pip builds locally; Claude is always simulated."""
 
 import os
+import json
+import signal
 import importlib.util
 from pathlib import Path
 import shutil
@@ -8,6 +10,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -63,6 +66,30 @@ class InstallTests(unittest.TestCase):
         with sqlite3.connect(db) as connection:
             self.assertEqual(connection.execute("PRAGMA integrity_check").fetchone()[0], "ok")
             self.assertEqual(connection.execute("PRAGMA foreign_key_check").fetchall(), [])
+        ready = self.root / "native-ready"
+        task = json.loads((self.root / "workspace/before.json").read_text())["id"]
+        child = subprocess.Popen([str(self.bin_dir / "ctr"), "--state-dir", str(db.parent),
+                                  "--claude-bin", str(self.root / "workspace/fake claude"), "resume", task],
+                                 env=dict(self.env, FAKE_SLEEP="30", FAKE_READY=str(ready)),
+                                 cwd=self.root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            deadline = time.monotonic() + 10
+            while not ready.exists() and child.poll() is None and time.monotonic() < deadline:
+                time.sleep(.02)
+            self.assertTrue(ready.exists())
+            # The installation lease protects even a state directory the
+            # uninstall caller does not know about.
+            self.install("--uninstall", "--state-dir", str(self.root / "unrelated-state"), code=1)
+            self.assertTrue((self.bin_dir / "ctr").exists())
+        finally:
+            child.send_signal(signal.SIGTERM)
+            child.communicate(timeout=10)
+        self.assertEqual(child.returncode, 143)
+        self.install("--uninstall", "--state-dir", str(self.root / "workspace/state"))
+        self.assertFalse(self.active.exists())
+        self.assertFalse((self.bin_dir / "ctr").exists())
+        self.assertTrue(db.exists())
+        self.assertTrue((self.root / "workspace/sessions").exists())
 
     def test_foreign_commands_environments_and_backups_are_preserved(self):
         self.bin_dir.mkdir()
