@@ -52,6 +52,9 @@ hook("SessionStart", payload)
 if os.environ.get("FAKE_MANUAL_MODEL"):
     hook("PostModelSwitch", dict(payload, hook_event_name="PostModelSwitch",
                                  to_model=os.environ["FAKE_MANUAL_MODEL"], source="command"))
+if os.environ.get("FAKE_AUTO_MODEL"):
+    hook("PostModelSwitch", dict(payload, hook_event_name="PostModelSwitch",
+                                 to_model=os.environ["FAKE_AUTO_MODEL"], source="auto"))
 if os.environ.get("FAKE_LOG"):
     with open(os.environ["FAKE_LOG"], "a") as stream:
         stream.write(json.dumps(dict(argv=args, cwd=str(Path.cwd()), session=session,

@@ -29,7 +29,7 @@ class LauncherTests(unittest.TestCase):
         self.state_dir = self.root / "state"
         self.log = self.root / "fake.jsonl"
         self.env = dict(os.environ, FAKE_LOG=str(self.log), PYTHONPATH=str(ROOT))
-        for key in ("FAKE_MANUAL_MODEL", "FAKE_SLEEP", "FAKE_EXIT", "FAKE_READY", "FAKE_NO_MODEL"):
+        for key in ("FAKE_MANUAL_MODEL", "FAKE_SLEEP", "FAKE_EXIT", "FAKE_READY", "FAKE_NO_MODEL", "FAKE_AUTO_MODEL"):
             self.env.pop(key, None)
         FAKE.chmod(0o755)
 
@@ -50,7 +50,8 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(first.returncode, 0, first.stderr)
         self.assertEqual(json.loads(first.stdout)["result"], "FAKE_RESPONSE")
         task = self.task()
-        self.assertEqual(task["model"], "claude-haiku-test-001")
+        self.assertEqual(task["model"], "haiku")
+        self.assertEqual(task["effective_model"], "claude-haiku-test-001")
         # Different continuation complexity must not trigger a new classification.
         second = self.call("resume", task["id"], "Design distributed architecture", "--", "-p")
         self.assertEqual(second.returncode, 0, second.stderr)
@@ -75,7 +76,8 @@ class LauncherTests(unittest.TestCase):
         result = self.call("new", "Fix typo", env=env)
         self.assertEqual(result.returncode, 0, result.stderr)
         task = self.task()
-        self.assertEqual(task["model"], "claude-haiku-test-001")
+        self.assertEqual(task["model"], "haiku")
+        self.assertEqual(task["effective_model"], "claude-haiku-test-001")
         self.assertIsNotNone(task["hook_seen_at"])
         result = self.call("resume", task["id"], env=env)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -93,6 +95,21 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(self.task()["model"], "claude-opus-manual")
         self.assertEqual(self.call("resume", self.task()["id"]).returncode, 0)
         self.assertEqual(self.logs()[-1]["model"], "claude-opus-manual")
+
+    def test_auto_switch_preserves_choice_and_reports_divergence(self):
+        result = self.call("new", "Fix typo", env=dict(self.env, FAKE_AUTO_MODEL="claude-sonnet-auto"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("divergência", result.stderr)
+        task = self.task()
+        self.assertEqual(task["model"], "haiku")
+        self.assertEqual(task["effective_model"], "claude-sonnet-auto")
+        self.assertEqual(task["resolved_model"], "claude-haiku-test-001")
+        self.assertTrue(any(e["kind"] == "model_diverged" for e in Store(self.state_dir).events(task["id"])))
+        self.assertEqual(self.call("resume", task["id"]).returncode, 0)
+        self.assertEqual(self.logs()[-1]["model"], "claude-haiku-test-001")
+        settings = json.loads(self.logs()[0]["argv"][self.logs()[0]["argv"].index("--settings") + 1])
+        self.assertIs(settings["switchModelsOnFlag"], False)
+        self.assertNotIn("availableModels", settings)
 
     def test_offline_and_resume_overrides(self):
         self.assertEqual(self.call("new", "Fix typo").returncode, 0)

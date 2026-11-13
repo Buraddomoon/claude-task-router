@@ -11,7 +11,7 @@ from . import __version__
 from .classifier import Decision, classify, validate_prompt
 from .config import MAX_PROMPT_BYTES, TIERS, load_config, validate_model
 from .launcher import doctor, executable, run, validate_extra
-from .state import Store
+from .state import Store, launch_model
 
 
 def parser():
@@ -136,7 +136,8 @@ def main(argv=None) -> int:
                 dump(tasks)
             else:
                 for task in tasks:
-                    print(f"{task['id']}  {task['model']}  {task['cwd']}")
+                    print(f"{task['id']}  solicitado={task['model']}  "
+                          f"efetivo={task['effective_model'] or 'não observado'}  {task['cwd']}")
                 if not tasks:
                     print("Nenhuma tarefa neste diretório.")
             return 0
@@ -156,7 +157,7 @@ def main(argv=None) -> int:
             if args.model:
                 validate_model(args.model)
             if args.dry_run:
-                dump(dict(task=task["id"], cwd=task["cwd"], model=args.model or task["model"],
+                dump(dict(task=task["id"], cwd=task["cwd"], model=args.model or launch_model(task),
                           reclassified=False, persisted=False))
                 return 0
             binary = executable(args.claude_bin)

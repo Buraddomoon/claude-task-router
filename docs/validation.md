@@ -31,3 +31,9 @@ Após a correção, uma tarefa classificada como economy executou com Haiku. O I
 Foram três chamadas de inferência no total, contando o smoke inicial. Custos reportados pelo próprio CLI: US$ 0,00058249; US$ 0,015428; US$ 0,0020179. Não são uma medição de faturamento da conta. O roteador não fez chamadas para classificar ou resolver o modelo. O smoke real não exercitou a interface `/model`; esse caminho é coberto pelo contrato oficial e pelos testes com PostModelSwitch simulado.
 
 `ctr doctor` confirmou versão e flags de integração. A instalação em venv dedicado e o comando instalado fora do checkout também foram verificados. O workflow do GitHub executa instalação, suíte, benchmark e entrypoint fora do checkout em Linux (Python 3.11/3.14) e macOS (Python 3.14); seu resultado fica nos checks do repositório.
+
+## Issue #13 — escolha e observação
+
+Regressões offline cobrem auto após resolução, substituição já em SessionStart, fontes manuais command/picker/sdk, restauração resume e retomada com o ID compatível original. O fake Claude executa hooks como subprocessos reais e confirma que switchModelsOnFlag=false não acrescenta uma allowlist. A intenção permanece em model, mesmo quando effective_model diverge. O ID fixado fica em resolved_model.
+
+Controle nativo conferido no --help do Claude 2.1.323 e na documentação oficial de [modelos](https://code.claude.com/docs/en/model-config#ask-before-switching) e [PostModelSwitch](https://code.claude.com/docs/en/hooks#postmodelswitch). Não houve chamada de inferência nesta etapa; as substituições são simuladas, sem alegar garantia de estabilidade do provedor.

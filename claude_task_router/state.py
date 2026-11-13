@@ -22,6 +22,16 @@ def default_state_dir() -> Path:
     return Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "claude-task-router"
 
 
+def matches_choice(choice: str, model: str) -> bool:
+    """Only pin recognized aliases to their own family; custom IDs stay literal."""
+    return model == choice or (choice in {"haiku", "sonnet", "opus", "fable"}
+                               and model.startswith(f"claude-{choice}-"))
+
+
+def launch_model(task: dict) -> str:
+    return task.get("resolved_model") or task["model"]
+
+
 class Store:
     def __init__(self, root: Path | None = None):
         self.root = (root or default_state_dir()).expanduser().resolve()
@@ -32,7 +42,7 @@ class Store:
         os.close(fd)
         with self.connect() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2):
+            if version not in (0, 1, 2, 3):
                 raise ValueError(f"Banco de versão {version} não suportado.")
             if version == 1:
                 db.execute("ALTER TABLE tasks ADD COLUMN transcript_path TEXT")
@@ -51,8 +61,24 @@ class Store:
                     id INTEGER PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id),
                     at TEXT NOT NULL, kind TEXT NOT NULL, model TEXT, source TEXT
                 );
-                PRAGMA user_version = 2;
             """)
+            if version < 3:
+                db.execute("ALTER TABLE tasks ADD COLUMN effective_model TEXT")
+                db.execute("ALTER TABLE tasks ADD COLUMN resolved_model TEXT")
+                # Recover intent from metadata, rather than promoting an old auto switch.
+                for row in db.execute("SELECT id,model,initial_model,observed_at FROM tasks").fetchall():
+                    choice = row["initial_model"]
+                    for event in db.execute("SELECT kind,model,source FROM events WHERE task_id=? ORDER BY id",
+                                            (row["id"],)).fetchall():
+                        if event["model"] and (event["kind"] == "model_requested" or
+                                (event["kind"] == "PostModelSwitch" and event["source"] in
+                                 {"command", "picker", "sdk"})):
+                            choice = event["model"]
+                    effective = row["model"] if row["observed_at"] else None
+                    resolved = effective if effective and matches_choice(choice, effective) else None
+                    db.execute("UPDATE tasks SET model=?,effective_model=?,resolved_model=? WHERE id=?",
+                               (choice, effective, resolved, row["id"]))
+                db.execute("PRAGMA user_version = 3")
 
     @contextmanager
     def connect(self):
@@ -102,7 +128,7 @@ class Store:
     def list_tasks(self, cwd: Path, all_projects=False, limit=20) -> list[dict]:
         where, args = ("", ()) if all_projects else ("WHERE cwd = ?", (str(cwd.resolve()),))
         with self.connect() as db:
-            rows = db.execute(f"""SELECT id,cwd,model,tier,created_at,updated_at,
+            rows = db.execute(f"""SELECT id,cwd,model,effective_model,resolved_model,tier,created_at,updated_at,
                 last_launched_at,last_exit_code,observed_at FROM tasks {where}
                 ORDER BY COALESCE(last_launched_at,created_at) DESC LIMIT ?""", (*args, limit)).fetchall()
         return [dict(row) for row in rows]
@@ -117,7 +143,8 @@ class Store:
         model = validate_model(model)
         timestamp = now()
         with self.connect() as db:
-            changed = db.execute("UPDATE tasks SET model=?,updated_at=?,observed_at=NULL WHERE id=?",
+            changed = db.execute("""UPDATE tasks SET model=?,updated_at=?,observed_at=NULL,
+                                 effective_model=NULL,resolved_model=NULL WHERE id=?""",
                                  (model, timestamp, task_id)).rowcount
             if changed != 1:
                 raise ValueError("Tarefa não encontrada.")
@@ -140,7 +167,7 @@ class Store:
             return False
         timestamp = now()
         with self.connect() as db:
-            row = db.execute("SELECT cwd FROM tasks WHERE id=?", (task_id,)).fetchone()
+            row = db.execute("SELECT cwd,model,resolved_model FROM tasks WHERE id=?", (task_id,)).fetchone()
             if not row or Path(cwd).resolve() != Path(row["cwd"]):
                 return False
             transcript = self.valid_transcript(payload.get("transcript_path"), task_id)
@@ -148,8 +175,22 @@ class Store:
                 transcript_path=COALESCE(?,transcript_path) WHERE id=?""",
                        (timestamp, str(transcript) if transcript else None, task_id))
             if model:
-                db.execute("UPDATE tasks SET model=?,updated_at=?,observed_at=? WHERE id=?",
-                           (model, timestamp, timestamp, task_id))
+                choice = row["model"]
+                resolved = row["resolved_model"]
+                if event == "PostModelSwitch" and source in {"command", "picker", "sdk"}:
+                    requested = payload.get("requested_model") or model
+                    choice = validate_model(requested)
+                    resolved = None
+                target = resolved or choice
+                compatible = matches_choice(target, model)
+                if source != "auto" and compatible and not resolved:
+                    resolved = model
+                db.execute("""UPDATE tasks SET model=?,resolved_model=?,effective_model=?,
+                           updated_at=?,observed_at=? WHERE id=?""",
+                           (choice, resolved, model, timestamp, timestamp, task_id))
+                if source == "auto" or not compatible:
+                    db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
+                               (task_id, timestamp, "model_diverged", model, source))
             db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
                        (task_id, timestamp, event, model, source))
         return True
@@ -200,12 +241,18 @@ class Store:
             timestamp = now()
             with self.connect() as db:
                 # Compare-and-set avoids racing a late PostModelSwitch hook.
-                changed = db.execute("""UPDATE tasks SET model=?,observed_at=?,updated_at=?
+                target = launch_model(task)
+                compatible = matches_choice(target, model)
+                resolved = model if compatible else task["resolved_model"]
+                changed = db.execute("""UPDATE tasks SET effective_model=?,resolved_model=?,observed_at=?,updated_at=?
                     WHERE id=? AND observed_at IS NULL AND model=?""",
-                    (model, timestamp, timestamp, task_id, task["model"])).rowcount
+                    (model, resolved, timestamp, timestamp, task_id, task["model"])).rowcount
                 if changed:
                     db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
                                (task_id, timestamp, "model_resolved", model, "transcript_tail"))
+                    if not compatible:
+                        db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
+                                   (task_id, timestamp, "model_diverged", model, "transcript_tail"))
             return bool(changed)
         return False
 

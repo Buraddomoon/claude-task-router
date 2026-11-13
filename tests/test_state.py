@@ -39,6 +39,30 @@ class StateTests(unittest.TestCase):
         self.assertIsNotNone(task["observed_at"])
         self.assertEqual(len(self.store.events(task["id"])), 3)
 
+    def test_only_manual_sources_change_intent(self):
+        for source in ("command", "picker", "sdk"):
+            with self.subTest(source=source):
+                self.assertTrue(self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
+                    hook_event_name="PostModelSwitch", source=source, requested_model="opus",
+                    to_model="claude-opus-test")))
+                task = self.store.get(self.task["id"])
+                self.assertEqual(task["model"], "opus")
+                self.assertEqual(task["resolved_model"], "claude-opus-test")
+        for source in ("auto", "resume"):
+            self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
+                hook_event_name="PostModelSwitch", source=source, to_model="claude-sonnet-test"))
+            self.assertEqual(self.store.get(self.task["id"])["model"], "opus")
+        self.assertEqual(self.store.get(self.task["id"])["effective_model"], "claude-sonnet-test")
+
+    def test_initial_substitution_never_becomes_choice(self):
+        self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
+            hook_event_name="SessionStart", source="startup", model="claude-opus-fallback"))
+        task = self.store.get(self.task["id"])
+        self.assertEqual(task["model"], "haiku")
+        self.assertIsNone(task["resolved_model"])
+        self.assertEqual(task["effective_model"], "claude-opus-fallback")
+        self.assertEqual(self.store.events(task["id"])[-2]["kind"], "model_diverged")
+
     def test_unknown_session_and_wrong_cwd_ignored(self):
         payload = dict(session_id=self.task["id"], cwd="/elsewhere", source="startup",
                        hook_event_name="SessionStart", model="claude-haiku-test")
@@ -104,6 +128,8 @@ class StateTests(unittest.TestCase):
         with self.store.connect() as db:
             db.execute("ALTER TABLE tasks DROP COLUMN transcript_path")
             db.execute("ALTER TABLE tasks DROP COLUMN hook_seen_at")
+            db.execute("ALTER TABLE tasks DROP COLUMN effective_model")
+            db.execute("ALTER TABLE tasks DROP COLUMN resolved_model")
             db.execute("PRAGMA user_version=1")
         migrated = Store(self.store.root)
         self.assertEqual(migrated.get(self.task["id"])["model"], "haiku")

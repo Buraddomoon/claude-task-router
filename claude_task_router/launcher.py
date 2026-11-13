@@ -10,6 +10,7 @@ import subprocess
 import sys
 
 from .config import validate_model
+from .state import launch_model, matches_choice
 
 MINIMUM_VERSION = (2, 1, 251)
 VALUE_FLAGS = {
@@ -58,7 +59,7 @@ def executable(binary: str) -> str:
 def hook_settings(state_dir: Path) -> str:
     command = shlex.join([sys.executable, str(Path(__file__).with_name("hook.py").resolve()),
                           "--state-dir", str(state_dir)])
-    return json.dumps({"hooks": {
+    return json.dumps({"switchModelsOnFlag": False, "hooks": {
         event: [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}]
         for event in ("SessionStart", "PostModelSwitch")
     }}, separators=(",", ":"))
@@ -67,7 +68,7 @@ def hook_settings(state_dir: Path) -> str:
 def build_command(binary: str, task: dict, state_dir: Path, prompt: str | None,
                   extra: list[str], resume: bool) -> list[str]:
     validate_extra(extra)
-    model = validate_model(task["model"])
+    model = validate_model(launch_model(task))
     command = [binary, "--model", model,
                "--resume" if resume else "--session-id", task["id"],
                "--settings", hook_settings(state_dir), *extra]
@@ -82,7 +83,7 @@ def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], re
     if not cwd.is_dir():
         raise ValueError(f"Diretório original não existe: {cwd}")
     command = build_command(binary, task, store.root, prompt, extra, resume)
-    print(f"[ctr] tarefa={task['id']} modelo={task['model']} "
+    print(f"[ctr] tarefa={task['id']} solicitado={task['model']} modelo={launch_model(task)} "
           f"{'retomada' if resume else 'nova'}", file=sys.stderr)
     # Inherit terminal and environment; Claude retains its own auth and permissions.
     child = subprocess.Popen(command, cwd=cwd)
@@ -118,6 +119,9 @@ def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], re
     if not current["observed_at"]:
         print("[ctr] modelo efetivo não observado; escolha salva preservada. "
               "Use ID explícito ou ctr model para fixar a versão.", file=sys.stderr)
+    elif not matches_choice(launch_model(current), current["effective_model"]):
+        print(f"[ctr] divergência: solicitado={current['model']} "
+              f"efetivo={current['effective_model']}; escolha salva preservada.", file=sys.stderr)
     return code
 
 
