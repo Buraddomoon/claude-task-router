@@ -57,7 +57,7 @@ ctr recover UUID --cwd /novo/projeto --prompt-file contexto-atual.txt
 | Programação usual, correção comum ou pedido ambíguo | `balanced` → Sonnet |
 | Arquitetura, causa raiz, concorrência, autenticação, pagamentos, migração de dados ou escopo amplo com implementação | `advanced` → Opus |
 
-Regras são heurísticas, não uma medida objetiva de dificuldade. Uma menção a autenticação numa tarefa simples pode elevar o tier por precaução. Use `classify` para inspecionar a decisão e `--model`/`--tier` para ajustar. Um pedido curto e ambíguo fica em Sonnet; tamanho sozinho não determina o modelo.
+Regras são heurísticas, não uma medida objetiva de dificuldade. Pedidos compostos consideram o trabalho adicional; citações, caminhos e exclusões explícitas têm tratamento local limitado para evitar confundir referências com implementação. Use `classify` para inspecionar a decisão e `--model`/`--tier` para ajustar. Um pedido curto e ambíguo fica em Sonnet; tamanho sozinho não determina o modelo. A [avaliação versionada](docs/classifier-evaluation.md) publica critérios, resultados e limites.
 
 ## Inspecionar sem consumir IA
 
@@ -117,6 +117,7 @@ As capacidades verificadas, as alternativas de integração e as fontes oficiais
 ```bash
 python3 -m unittest discover -s tests -v
 python3 benchmarks/run.py
+python3 evaluation/run.py
 ```
 
 Os testes usam uma CLI simulada e não consomem IA. O benchmark reporta latência local e verifica exemplos sintéticos da política; não mede qualidade de respostas nem economia real de faturamento. Evidências do smoke real: [docs/validation.md](docs/validation.md).

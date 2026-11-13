@@ -1,6 +1,7 @@
 """Run with the installed interpreter, from outside the source checkout."""
 
 import json
+from importlib.metadata import version
 import os
 from pathlib import Path
 import shutil
@@ -12,6 +13,7 @@ import claude_task_router
 SOURCE = Path(__file__).resolve().parent.parent
 assert not Path(claude_task_router.__file__).resolve().is_relative_to(SOURCE)
 assert not Path.cwd().resolve().is_relative_to(SOURCE)
+assert version("claude-task-router") == claude_task_router.__version__
 root = Path(sys.argv[1]).resolve()
 root.mkdir(parents=True, exist_ok=True)
 project = root / "project with space '"

@@ -1,0 +1,79 @@
+{
+  "split": "evaluation",
+  "corpus_sha256": "4f925b78f247678e48a2ab582a55bbf04eee1fc7f7d7068e49984375fc97c1e9",
+  "policy": "local-rules-v2",
+  "python": "3.14.3",
+  "platform": "Linux",
+  "cases": 28,
+  "exact": 28,
+  "undersized": 0,
+  "oversized": 0,
+  "accuracy": 1.0,
+  "undersizing_rate": 0.0,
+  "oversizing_rate": 0.0,
+  "confusion": {
+    "economy": {
+      "economy": 11,
+      "balanced": 0,
+      "advanced": 0
+    },
+    "balanced": {
+      "economy": 0,
+      "balanced": 9,
+      "advanced": 0
+    },
+    "advanced": {
+      "economy": 0,
+      "balanced": 0,
+      "advanced": 8
+    }
+  },
+  "categories": {
+    "simple": {
+      "total": 4,
+      "correct": 4
+    },
+    "common": {
+      "total": 4,
+      "correct": 4
+    },
+    "complex": {
+      "total": 4,
+      "correct": 4
+    },
+    "composed": {
+      "total": 4,
+      "correct": 4
+    },
+    "negative": {
+      "total": 4,
+      "correct": 4
+    },
+    "reference": {
+      "total": 4,
+      "correct": 4
+    },
+    "quoted": {
+      "total": 4,
+      "correct": 4
+    }
+  },
+  "mismatches": [],
+  "classifier_p50_ms": 0.0191,
+  "classifier_p95_ms": 0.0262,
+  "maximum_input_bytes": 262144,
+  "maximum_scanned_chars": 65536,
+  "maximum_p95_ms": 18.6683,
+  "checks": {
+    "accuracy": true,
+    "undersizing": true,
+    "oversizing": true,
+    "advanced_never_economy": true,
+    "typical_latency": true,
+    "maximum_latency": true
+  },
+  "passed": true,
+  "router_inference_calls": 0,
+  "router_injected_context_tokens": 0,
+  "limitation": "Synthetic tier labels; not real answer quality, billing or token savings."
+}

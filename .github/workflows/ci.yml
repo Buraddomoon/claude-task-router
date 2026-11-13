@@ -30,6 +30,8 @@ jobs:
           python -m pip install --no-deps dist/*.whl
       - run: python -m unittest discover -s tests -v
       - run: python benchmarks/run.py
+      - name: Fixed evaluation corpus and latency gates
+        run: python evaluation/run.py --output evaluation-ci.json
       - name: Installed entry point outside source directory
         run: |
           cd "$(mktemp -d)"
@@ -37,4 +39,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: wheel-${{ matrix.os }}-py${{ matrix.python }}
-          path: dist/*.whl
+          path: |
+            dist/*.whl
+            evaluation-ci.json
