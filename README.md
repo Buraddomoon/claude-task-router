@@ -2,7 +2,7 @@
 
 Launcher local que escolhe o modelo do Claude Code no início da tarefa e preserva a escolha nas continuações. Classificação determinística PT/EN, sem chamadas de IA, proxy ou dependências de runtime além da biblioteca padrão do Python.
 
-**V1.0 — launcher local implementado e homologado.** Seleção por tarefa, controle manual, retomada, recuperação, avaliação versionada e instalação com rollback. A [release v1.0.0](https://github.com/Buraddomoon/claude-task-router/releases/tag/v1.0.0) é liberada após a CI do commit final passar em Linux/macOS. Consulte a [conferência dos requisitos](docs/final-audit.md) e os [limites de prontidão](docs/readiness.md).
+**Foco: uso pessoal confiável no Claude Code.** A V1.1 acrescenta entrada automática conservadora, diagnóstico de modelos/login, timeout print, proteção do estado, setup, backup/restauração e desinstalação. A versão funcional anterior continua na tag v1.0.0. A [release v1.1.0](https://github.com/Buraddomoon/claude-task-router/releases/tag/v1.1.0) só é publicada após a CI final. Não é uma oferta comercial nem uma promessa de funcionamento perfeito. Consulte o [relatório de uso diário](docs/personal-readiness.md).
 
 ## Instalar
 
@@ -11,8 +11,9 @@ Requisitos: Linux/macOS, Python 3.11+, Claude Code 2.1.251+ instalado e autentic
 ```bash
 git clone https://github.com/Buraddomoon/claude-task-router.git
 cd claude-task-router
-git checkout v1.0.0
+git checkout v1.1.0
 bash scripts/install.sh
+~/.local/bin/ctr setup
 ~/.local/bin/ctr doctor
 ```
 
@@ -21,6 +22,12 @@ O instalador prepara um venv isolado antes de ativá-lo por `~/.local/share/clau
 Alternativa, em um ambiente Python já escolhido: `python3 -m pip install --no-deps .`. Para executar direto do checkout: `python3 -m claude_task_router`.
 
 ## Usar no projeto
+
+No dia a dia, `ctr run "Sua tarefa"` ou `ctr "Sua tarefa"` inicia uma tarefa
+nova ou reconhece uma continuação clara da tarefa recente deste projeto.
+`ctr` sem prompt abre a última tarefa. Use `--new`/`--continue` para decidir
+explicitamente. Essa regra não adivinha mudanças arbitrárias de assunto dentro
+do Claude aberto. Veja o [guia diário](docs/daily-use.md).
 
 ```bash
 cd /caminho/do/seu/projeto
@@ -71,7 +78,7 @@ ctr show latest
 ctr doctor
 ```
 
-`classify` e `new --dry-run` não criam tarefas nem executam o Claude. `show` apresenta metadados e eventos, incluindo se o modelo efetivo foi observado. `doctor` chama apenas `claude --help`/`--version`; não verifica acesso da conta aos modelos. Opções globais vêm antes do subcomando.
+`classify` e `new --dry-run` não criam tarefas nem executam o Claude. `show` apresenta metadados e eventos, incluindo se o modelo efetivo foi observado. `doctor` verifica interface e login com comandos nativos, sem inferência. `models --check haiku` verifica nome/restrição sem turno de IA observado; `models --probe haiku` faz um teste real curto, explicitamente com consumo. Nenhum deles garante autorização futura. Opções globais vêm antes do subcomando.
 
 ## Arquivos, pipes e modo print
 
@@ -119,8 +126,21 @@ As capacidades verificadas, as alternativas de integração e as fontes oficiais
 python3 -m unittest discover -s tests -v
 python3 benchmarks/run.py
 python3 evaluation/run.py
+# Só imprime plano; não consome IA:
+python3 evaluation/real.py
 ```
 
 Os testes usam uma CLI simulada e não consomem IA. O benchmark reporta latência local e verifica exemplos sintéticos da política; não mede qualidade de respostas nem economia real de faturamento. Evidências do smoke real: [docs/validation.md](docs/validation.md).
+
+Uma [comparação real controlada](docs/real-efficiency.md) registrou tanto a
+piora inicial como a melhora após correção: no seguimento, custo estimado do
+CLI −49,2%, tempo −12,5% e tokens **+20,4%**, com 12/12 acertos por braço.
+São microtarefas conhecidas, com cache e esforço fixo; não uma garantia de
+economia de tokens, qualidade geral ou faturamento.
+
+`ctr diagnostics` exporta somente estatísticas; não compartilhe `show`/`status`
+sem revisar metadados privados. Consulte [segurança](SECURITY.md) e
+[configuração, backup e remoção](docs/maintenance.md). A licença de distribuição
+não foi alterada: o escopo esclarecido é uso próprio, sem venda.
 
 Etapas são acompanhadas por issues com subissues nativas e milestones `V0.1`/`V1.0`, seguindo a estrutura do memory-os; [governança](docs/governance.md). A instalação é local; para atualizar uma versão fixada, faça fetch, selecione a tag desejada e execute novamente o instalador. Atualização, rollback e desinstalação estão no [guia de instalação](docs/installation.md). Os metadados ficam em `~/.local/state/claude-task-router` para recuperação até você removê-los.

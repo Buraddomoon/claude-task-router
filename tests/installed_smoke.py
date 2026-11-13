@@ -37,8 +37,10 @@ def call(*args, code=0):
 snapshot = root / "before.json"
 if not snapshot.exists():
     assert json.loads(call("doctor").stdout)["ok"]
+    assert json.loads(call("--config", str(root / "config.json"), "setup").stdout)["created"]
+    assert json.loads(call("models", "--check", "haiku").stdout)["native_turns"] == 0
     assert json.loads(call("classify", "Fix typo", "--json").stdout)["tier"] == "economy"
-    assert json.loads(call("new", "Fix typo", "--", "-p").stdout)["result"] == "FAKE_RESPONSE"
+    assert json.loads(call("run", "Fix typo", "--", "-p").stdout)["result"] == "FAKE_RESPONSE"
     task = json.loads(call("show").stdout)
     call("model", task["id"], "opus")
     call("resume", task["id"], "Implement a distributed architecture", "--", "-p")
@@ -47,10 +49,16 @@ if not snapshot.exists():
     assert task["launches"] == 2
     # Exercise real installed hooks for the slash-command contract as well.
     env["FAKE_MANUAL_MODEL"] = "claude-sonnet-manual"
-    call("resume", task["id"], "--", "-p")
+    call("run", "Continue", "--", "-p")
     env.pop("FAKE_MANUAL_MODEL")
     task = json.loads(call("show", task["id"]).stdout)
     assert task["model"] == "claude-sonnet-manual"
+    diagnostic = json.loads(call("diagnostics").stdout)
+    assert diagnostic["task_count"] == 1 and task["id"] not in json.dumps(diagnostic)
+    call("backup", str(root / "snapshot.sqlite3"))
+    call("--state-dir", str(root / "restored"), "restore", str(root / "snapshot.sqlite3"))
+    restored = json.loads(call("--state-dir", str(root / "restored"), "show", task["id"]).stdout)
+    assert restored["model"] == task["model"] and restored["events"] == task["events"]
     snapshot.write_text(json.dumps(task))
 else:
     before = json.loads(snapshot.read_text())

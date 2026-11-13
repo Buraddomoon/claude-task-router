@@ -9,3 +9,9 @@ Este repositório pessoal usa milestone V0.1, main e commits incrementais por su
 V0.1 registra a entrega inicial funcional. V1.0 acompanha as pendências para concluir o escopo original; os critérios estão em `docs/readiness.md`. Uma milestone concluída não deve ser apresentada como projeto concluído quando houver requisitos sem evidência ou defeitos conhecidos pendentes.
 
 Fechar subissues após entrega e evidência; fechar pais somente com todas as partes entregues em main. Registrar novas etapas antes de implementá-las.
+
+A milestone `V1 Uso Diário` e a entrega #23 registram a evolução pessoal após
+o usuário esclarecer que não pretende vender o projeto. As entregas #24–#29
+mantêm o foco no Claude Code. A V1.0 funcional e seus critérios históricos
+permanecem preservados. Limites de economia e de validação nativa macOS devem
+continuar explícitos, mesmo com a suíte e a CI aprovadas.

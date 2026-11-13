@@ -1,5 +1,9 @@
 # Evidências de validação
 
+Evolução para uso pessoal V1.1: [relatório atual](personal-readiness.md),
+[teste nativo instalado](personal-validation.md) e [eficiência real](real-efficiency.md).
+As seções V1.0 abaixo são históricas e não substituem os limites atuais.
+
 Homologação posterior de `/model`, PTY, Ctrl-C e retomada: [issue #20](interactive-qa.md).
 As descrições dos smokes anteriores abaixo mantêm seus limites históricos.
 

@@ -23,10 +23,10 @@ def parser():
                "-p, --output-format, --permission-mode, --max-budget-usd, --max-turns, "
                "--effort, --tools, --allowedTools, --disallowedTools, --name, --verbose, "
                "--append-system-prompt, --json-schema, --include-partial-messages, "
-               "--include-hook-events, --no-chrome, --dangerously-skip-permissions.")
+               "--include-hook-events, --no-chrome, --restricted, --dangerously-skip-permissions.")
     p.add_argument("--version", action="version", version=__version__)
     p.add_argument("--state-dir", type=Path, default=None)
-    p.add_argument("--config", type=Path, default=None, help="JSON explícito, usado somente em new/classify")
+    p.add_argument("--config", type=Path, default=None, help="Config explícita para tarefa nova/classify/setup; resume ignora")
     p.add_argument("--claude-bin", default="claude")
     subs = p.add_subparsers(dest="command", required=True)
     for name in ("new", "classify", "run"):

@@ -1,5 +1,9 @@
 # Instalação, atualização e rollback — #21
 
+Na V1.1, `ctr setup`, backup/restauração, desinstalação gerenciada e proteção
+contra manutenção durante tarefas estão no [guia de manutenção](maintenance.md).
+Instalações por pip devem usar o pip daquele ambiente para remover o pacote.
+
 Requisitos: Linux/macOS, Python 3.11+ com venv/pip. Para executar tarefas reais,
 Claude Code autenticado; a instalação e os testes não precisam da conta.
 Em distribuições que separam venv, instale o pacote `python3-venv` apropriado.
