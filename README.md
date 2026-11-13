@@ -15,7 +15,7 @@ bash scripts/install.sh
 ~/.local/bin/ctr doctor
 ```
 
-O instalador cria um venv isolado em `~/.local/share/claude-task-router/venv` e o comando `~/.local/bin/ctr`. Não altera configurações do Claude nem arquivos do shell. Adicione `~/.local/bin` ao PATH se necessário. `CTR_VENV_DIR` e `CTR_BIN_DIR` personalizam esses caminhos. O empacotamento pode baixar setuptools durante a instalação; o roteamento é inteiramente local.
+O instalador prepara um venv isolado antes de ativá-lo por `~/.local/share/claude-task-router/venv` e cria o comando `~/.local/bin/ctr`. Guarda a geração anterior para `bash scripts/install.sh --rollback`. Não altera configurações do Claude nem arquivos do shell. Adicione `~/.local/bin` ao PATH se necessário. `CTR_VENV_DIR` e `CTR_BIN_DIR` personalizam esses caminhos. O empacotamento pode baixar setuptools durante a instalação; o roteamento é inteiramente local. Consulte [atualização e rollback](docs/installation.md).
 
 Alternativa, em um ambiente Python já escolhido: `python3 -m pip install --no-deps .`. Para executar direto do checkout: `python3 -m claude_task_router`.
 
