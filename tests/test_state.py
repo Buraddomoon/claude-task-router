@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 from claude_task_router.classifier import classify
 from claude_task_router.config import Config
@@ -70,3 +72,39 @@ class StateTests(unittest.TestCase):
         for ref in ("../../escape", "x", "%", "' OR 1=1"):
             with self.assertRaises(ValueError):
                 self.store.get(ref)
+
+    def test_transcript_ignores_old_wrong_session_and_newer_manual_switch(self):
+        config_root = self.cwd / "claude-config"
+        transcript = config_root / "projects/fake" / (self.task["id"] + ".jsonl")
+        transcript.parent.mkdir(parents=True)
+        with patch.dict("os.environ", CLAUDE_CONFIG_DIR=str(config_root)):
+            self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd), source="startup",
+                hook_event_name="SessionStart", transcript_path=str(transcript)))
+            self.store.launched(self.task["id"])
+            old = datetime.now(timezone.utc) - timedelta(hours=1)
+            def entry(session, at, model):
+                return json.dumps(dict(type="assistant", sessionId=session,
+                                       timestamp=at.isoformat(), message=dict(model=model)))
+            transcript.write_text(entry(self.task["id"], old, "old-model") + "\n" +
+                                  entry("wrong-session", datetime.now(timezone.utc), "wrong-model") + "\n")
+            self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
+            with transcript.open("a") as stream:
+                stream.write(entry(self.task["id"], datetime.now(timezone.utc), "real-model") + "\n")
+            self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd), source="command",
+                hook_event_name="PostModelSwitch", to_model="manual-newer"))
+            self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
+            self.assertEqual(self.store.get(self.task["id"])["model"], "manual-newer")
+
+    def test_transcript_path_is_restricted(self):
+        self.assertIsNone(self.store.valid_transcript("/etc/passwd", self.task["id"]))
+        self.assertIsNone(self.store.valid_transcript(str(self.cwd / (self.task["id"] + ".jsonl")),
+                                                      self.task["id"]))
+
+    def test_schema_v1_migration_preserves_tasks(self):
+        with self.store.connect() as db:
+            db.execute("ALTER TABLE tasks DROP COLUMN transcript_path")
+            db.execute("ALTER TABLE tasks DROP COLUMN hook_seen_at")
+            db.execute("PRAGMA user_version=1")
+        migrated = Store(self.store.root)
+        self.assertEqual(migrated.get(self.task["id"])["model"], "haiku")
+        self.assertIsNone(migrated.get(self.task["id"])["transcript_path"])

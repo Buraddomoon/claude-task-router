@@ -32,8 +32,11 @@ class Store:
         os.close(fd)
         with self.connect() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1):
+            if version not in (0, 1, 2):
                 raise ValueError(f"Banco de versão {version} não suportado.")
+            if version == 1:
+                db.execute("ALTER TABLE tasks ADD COLUMN transcript_path TEXT")
+                db.execute("ALTER TABLE tasks ADD COLUMN hook_seen_at TEXT")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS tasks (
                     id TEXT PRIMARY KEY, cwd TEXT NOT NULL, model TEXT NOT NULL,
@@ -41,14 +44,14 @@ class Store:
                     decision_json TEXT NOT NULL, config_json TEXT NOT NULL,
                     prompt_sha256 TEXT NOT NULL, prompt_chars INTEGER NOT NULL,
                     created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
-                    last_launched_at TEXT, observed_at TEXT,
+                    last_launched_at TEXT, observed_at TEXT, transcript_path TEXT, hook_seen_at TEXT,
                     launches INTEGER NOT NULL DEFAULT 0, last_exit_code INTEGER
                 );
                 CREATE TABLE IF NOT EXISTS events (
                     id INTEGER PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id),
                     at TEXT NOT NULL, kind TEXT NOT NULL, model TEXT, source TEXT
                 );
-                PRAGMA user_version = 1;
+                PRAGMA user_version = 2;
             """)
 
     @contextmanager
@@ -126,9 +129,8 @@ class Store:
         if event not in {"SessionStart", "PostModelSwitch"}:
             return False
         model = payload.get("model") if event == "SessionStart" else payload.get("to_model")
-        if not model:
-            return False
-        validate_model(model)
+        if model:
+            validate_model(model)
         source = payload.get("source")
         if source not in {"startup", "resume", "compact", "clear", "fork", "command", "picker", "sdk", "auto"}:
             return False
@@ -141,11 +143,71 @@ class Store:
             row = db.execute("SELECT cwd FROM tasks WHERE id=?", (task_id,)).fetchone()
             if not row or Path(cwd).resolve() != Path(row["cwd"]):
                 return False
-            db.execute("UPDATE tasks SET model=?,updated_at=?,observed_at=? WHERE id=?",
-                       (model, timestamp, timestamp, task_id))
+            transcript = self.valid_transcript(payload.get("transcript_path"), task_id)
+            db.execute("""UPDATE tasks SET hook_seen_at=?,
+                transcript_path=COALESCE(?,transcript_path) WHERE id=?""",
+                       (timestamp, str(transcript) if transcript else None, task_id))
+            if model:
+                db.execute("UPDATE tasks SET model=?,updated_at=?,observed_at=? WHERE id=?",
+                           (model, timestamp, timestamp, task_id))
             db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
                        (task_id, timestamp, event, model, source))
         return True
+
+    @staticmethod
+    def valid_transcript(raw, task_id: str) -> Path | None:
+        if not isinstance(raw, str):
+            return None
+        path = Path(raw).expanduser().resolve()
+        config_root = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude")).expanduser().resolve()
+        if path.name != task_id + ".jsonl" or not path.is_relative_to(config_root / "projects"):
+            return None
+        return path
+
+    def reconcile_transcript(self, task_id: str) -> bool:
+        """Resolve absent SessionStart.model using at most the last 1 MiB on disk.
+
+        Never override an observed model switch or reuse a response from a prior run.
+        """
+        task = self.get(task_id)
+        if task["observed_at"] or not task["last_launched_at"]:
+            return False
+        path = self.valid_transcript(task["transcript_path"], task_id)
+        if not path or not path.is_file():
+            return False
+        with path.open("rb") as stream:
+            size = stream.seek(0, os.SEEK_END)
+            start = max(0, size - 1024 * 1024)
+            stream.seek(start)
+            tail = stream.read(1024 * 1024)
+        if start:
+            tail = tail.partition(b"\n")[2]
+        for line in reversed(tail.splitlines()):
+            try:
+                entry = json.loads(line)
+                if (not isinstance(entry, dict) or entry.get("type") != "assistant"
+                        or entry.get("sessionId") != task_id):
+                    continue
+                at = datetime.fromisoformat(entry["timestamp"].replace("Z", "+00:00"))
+                if at < datetime.fromisoformat(task["last_launched_at"]):
+                    continue
+                model = entry["message"]["model"]
+                if not model or model.startswith("<"):
+                    continue
+                validate_model(model)
+            except (ValueError, KeyError, TypeError, AttributeError):
+                continue
+            timestamp = now()
+            with self.connect() as db:
+                # Compare-and-set avoids racing a late PostModelSwitch hook.
+                changed = db.execute("""UPDATE tasks SET model=?,observed_at=?,updated_at=?
+                    WHERE id=? AND observed_at IS NULL AND model=?""",
+                    (model, timestamp, timestamp, task_id, task["model"])).rowcount
+                if changed:
+                    db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
+                               (task_id, timestamp, "model_resolved", model, "transcript_tail"))
+            return bool(changed)
+        return False
 
     def launched(self, task_id: str):
         timestamp = now()

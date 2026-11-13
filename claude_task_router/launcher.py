@@ -110,6 +110,14 @@ def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], re
             signal.signal(signum, previous)
     code = result if result >= 0 else 128 - result
     store.finished(task["id"], code)
+    try:
+        store.reconcile_transcript(task["id"])
+    except (OSError, ValueError):
+        pass
+    current = store.get(task["id"])
+    if not current["observed_at"]:
+        print("[ctr] modelo efetivo não observado; escolha salva preservada. "
+              "Use ID explícito ou ctr model para fixar a versão.", file=sys.stderr)
     return code
 
 
