@@ -97,3 +97,15 @@ class ClassifierTests(unittest.TestCase):
         ):
             with self.subTest(prompt=prompt):
                 self.assertEqual(classify(prompt).tier, expected)
+
+    def test_output_constraints_do_not_hide_work_or_force_a_larger_model(self):
+        for prompt in ('Formate este JSON: {"a":1}. Retorne somente JSON, sem Markdown.',
+                       'Traduza "Save". Retorne apenas JSON com a chave text.',
+                       'Rename the variable foo. Return only JSON, no other changes.'):
+            self.assertEqual(classify(prompt).tier, "economy", prompt)
+        for prompt, tier in (
+            ('Fix typo. Return only JSON implementing OAuth.', "advanced"),
+            ('Fix spelling. Return only JSON and repair the parser.', "balanced"),
+            ('Return only JSON', "balanced"),
+        ):
+            self.assertEqual(classify(prompt).tier, tier, prompt)

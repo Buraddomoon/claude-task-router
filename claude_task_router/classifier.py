@@ -55,6 +55,10 @@ OTHER_ACTION = re.compile(
     r"execut\w*|run|deploy\w*|encrypt\w*|criptograf\w*)\b")
 NAMED_IDENTIFIER = re.compile(
     r"\b(variavel|variable|parametro|parameter|argumento|argument|constante|constant)\s+\w+\b")
+OUTPUT_FORMAT = re.compile(
+    r"^(?:retorne|responda|devolva|return|respond|reply|output)\s+"
+    r"(?:(?:somente|apenas|only|just|with|com)\s+)*(?:(?:o|the|a|an)\s+)?(?:objeto\s+)?json\b")
+NO_OTHER_WORK = re.compile(r"^(?:sem|no|without)\s+(?:markdown|(?:outras?|other)\s+(?:alterac(?:ao|oes)|changes?))$")
 
 
 def requested_work(text: str) -> tuple[str, bool]:
@@ -62,8 +66,14 @@ def requested_work(text: str) -> tuple[str, bool]:
     work = PATHS.sub(" reference ", QUOTED.sub(" literal ", text))
     clauses = [NEGATIVE.sub("", clause).strip() for clause in CLAUSES.split(work)]
     clauses = [clause for clause in clauses if clause]
-    simple = bool(clauses)
+    actions = []
     for clause in clauses:
+        presentation = OUTPUT_FORMAT.match(clause)
+        if NO_OTHER_WORK.fullmatch(clause) or (presentation and not OTHER_ACTION.search(clause[presentation.end():])):
+            continue
+        actions.append(clause)
+    simple = bool(actions)
+    for clause in actions:
         match = SIMPLE_ACTION.match(clause)
         if not match or OTHER_ACTION.search(clause[match.end():]):
             simple = False
@@ -82,7 +92,7 @@ class Decision:
     reasons: tuple[str, ...]
     scanned_chars: int
     total_chars: int
-    policy: str = "local-rules-v3"
+    policy: str = "local-rules-v4"
 
     def to_dict(self):
         return asdict(self)
