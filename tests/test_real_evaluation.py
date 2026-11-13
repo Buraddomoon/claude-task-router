@@ -1,11 +1,17 @@
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
-from evaluation.real import quality, summarize
+from evaluation.real import execute, quality, summarize
 
 
 class RealEvaluationTests(unittest.TestCase):
+    def test_spawn_failure_is_a_recordable_failure_without_retry(self):
+        with patch("evaluation.real.subprocess.Popen", side_effect=FileNotFoundError()) as spawn:
+            self.assertEqual(execute(["missing"], Path.cwd(), {}), (2, ""))
+            self.assertEqual(spawn.call_count, 1)
+
     def test_pure_arithmetic_grader_rejects_executable_or_incorrect_code(self):
         case = dict(kind="python")
         self.assertTrue(quality(case, json.dumps(dict(code="def pages(total, size):\n return (total + size - 1) // size"))))

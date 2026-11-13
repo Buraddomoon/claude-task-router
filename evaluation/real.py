@@ -68,8 +68,11 @@ def quality(case, text):
 
 
 def execute(command, cwd, env):
-    child = subprocess.Popen(command, cwd=cwd, env=env, start_new_session=True,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        child = subprocess.Popen(command, cwd=cwd, env=env, start_new_session=True,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    except OSError:
+        return 2, ""  # Record a failed spawn instead of discarding the attempted row.
     try:
         out, _ = child.communicate(timeout=100)
         return child.returncode, out

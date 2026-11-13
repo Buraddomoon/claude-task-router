@@ -1,0 +1,562 @@
+{
+  "protocol": "real-v1",
+  "cases_sha256": "66c40013735cde4902d888a78da1abc7075457cc3d6ce38414e1d2bd66f43ddc",
+  "policy": "local-rules-v4",
+  "python": "3.14.3",
+  "platform": "Linux",
+  "planned_calls": 24,
+  "repetitions": 2,
+  "max_estimated_cost_usd": 1.0,
+  "router_inference_calls_per_classification": 0,
+  "router_context_instructions": 0,
+  "plan": [
+    {
+      "id": "spelling",
+      "expected_tier": "economy",
+      "routed": {
+        "tier": "economy",
+        "model": "haiku",
+        "score": 0,
+        "reasons": [
+          "bounded_simple_intent"
+        ],
+        "scanned_chars": 112,
+        "total_chars": 112,
+        "policy": "local-rules-v4"
+      }
+    },
+    {
+      "id": "rename",
+      "expected_tier": "economy",
+      "routed": {
+        "tier": "economy",
+        "model": "haiku",
+        "score": 0,
+        "reasons": [
+          "bounded_simple_intent"
+        ],
+        "scanned_chars": 176,
+        "total_chars": 176,
+        "policy": "local-rules-v4"
+      }
+    },
+    {
+      "id": "json-format",
+      "expected_tier": "economy",
+      "routed": {
+        "tier": "balanced",
+        "model": "sonnet",
+        "score": 0,
+        "reasons": [
+          "uncertain_use_balanced"
+        ],
+        "scanned_chars": 106,
+        "total_chars": 106,
+        "policy": "local-rules-v4"
+      }
+    },
+    {
+      "id": "translation",
+      "expected_tier": "economy",
+      "routed": {
+        "tier": "economy",
+        "model": "haiku",
+        "score": 0,
+        "reasons": [
+          "bounded_simple_intent"
+        ],
+        "scanned_chars": 97,
+        "total_chars": 97,
+        "policy": "local-rules-v4"
+      }
+    },
+    {
+      "id": "pagination",
+      "expected_tier": "balanced",
+      "routed": {
+        "tier": "balanced",
+        "model": "sonnet",
+        "score": 2,
+        "reasons": [
+          "implementation"
+        ],
+        "scanned_chars": 343,
+        "total_chars": 343,
+        "policy": "local-rules-v4"
+      }
+    },
+    {
+      "id": "concurrency",
+      "expected_tier": "advanced",
+      "routed": {
+        "tier": "advanced",
+        "model": "opus",
+        "score": 6,
+        "reasons": [
+          "complex_reasoning"
+        ],
+        "scanned_chars": 410,
+        "total_chars": 410,
+        "policy": "local-rules-v4"
+      }
+    }
+  ],
+  "records": [
+    {
+      "case": "spelling",
+      "repetition": 1,
+      "arm": "baseline",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 3.5801,
+      "cli_estimated_cost_usd": 0.0016960999999999999,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 341,
+        "cache_read_input_tokens": 1681,
+        "output_tokens": 16
+      },
+      "total_tokens": 2040
+    },
+    {
+      "case": "spelling",
+      "repetition": 1,
+      "arm": "routed",
+      "requested_model": "haiku",
+      "effective_models": [
+        "claude-haiku-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.403,
+      "cli_estimated_cost_usd": 0.00010544000000000002,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 362,
+        "cache_read_input_tokens": 2484,
+        "output_tokens": 16
+      },
+      "total_tokens": 2864
+    },
+    {
+      "case": "rename",
+      "repetition": 1,
+      "arm": "routed",
+      "requested_model": "haiku",
+      "effective_models": [
+        "claude-haiku-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.6028,
+      "cli_estimated_cost_usd": 0.00015732999999999999,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 618,
+        "cache_read_input_tokens": 2253,
+        "output_tokens": 22
+      },
+      "total_tokens": 2895
+    },
+    {
+      "case": "rename",
+      "repetition": 1,
+      "arm": "baseline",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.5555,
+      "cli_estimated_cost_usd": 0.0017586,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 341,
+        "cache_read_input_tokens": 1706,
+        "output_tokens": 22
+      },
+      "total_tokens": 2071
+    },
+    {
+      "case": "json-format",
+      "repetition": 1,
+      "arm": "baseline",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 3.1998,
+      "cli_estimated_cost_usd": 0.0018167,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 341,
+        "cache_read_input_tokens": 1687,
+        "output_tokens": 28
+      },
+      "total_tokens": 2058
+    },
+    {
+      "case": "json-format",
+      "repetition": 1,
+      "arm": "routed",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 3.25,
+      "cli_estimated_cost_usd": 0.00048679999999999996,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2028,
+        "output_tokens": 28
+      },
+      "total_tokens": 2058
+    },
+    {
+      "case": "translation",
+      "repetition": 1,
+      "arm": "routed",
+      "requested_model": "haiku",
+      "effective_models": [
+        "claude-haiku-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.5391,
+      "cli_estimated_cost_usd": 0.00014773,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 585,
+        "cache_read_input_tokens": 2253,
+        "output_tokens": 16
+      },
+      "total_tokens": 2856
+    },
+    {
+      "case": "translation",
+      "repetition": 1,
+      "arm": "baseline",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.5879,
+      "cli_estimated_cost_usd": 0.0016952999999999998,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 341,
+        "cache_read_input_tokens": 1673,
+        "output_tokens": 16
+      },
+      "total_tokens": 2032
+    },
+    {
+      "case": "pagination",
+      "repetition": 1,
+      "arm": "baseline",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 5.1064,
+      "cli_estimated_cost_usd": 0.0018538,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 341,
+        "cache_read_input_tokens": 1758,
+        "output_tokens": 31
+      },
+      "total_tokens": 2132
+    },
+    {
+      "case": "pagination",
+      "repetition": 1,
+      "arm": "routed",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.7279,
+      "cli_estimated_cost_usd": 0.0005239,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2099,
+        "output_tokens": 31
+      },
+      "total_tokens": 2132
+    },
+    {
+      "case": "concurrency",
+      "repetition": 1,
+      "arm": "routed",
+      "requested_model": "opus",
+      "effective_models": [
+        "claude-opus-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.9898,
+      "cli_estimated_cost_usd": 0.0034162000000000003,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 337,
+        "cache_read_input_tokens": 1861,
+        "output_tokens": 17
+      },
+      "total_tokens": 2217
+    },
+    {
+      "case": "concurrency",
+      "repetition": 1,
+      "arm": "baseline",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 3.1086,
+      "cli_estimated_cost_usd": 0.0017165,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 341,
+        "cache_read_input_tokens": 1785,
+        "output_tokens": 17
+      },
+      "total_tokens": 2145
+    },
+    {
+      "case": "spelling",
+      "repetition": 2,
+      "arm": "routed",
+      "requested_model": "haiku",
+      "effective_models": [
+        "claude-haiku-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.4767,
+      "cli_estimated_cost_usd": 3.6660000000000005e-05,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2846,
+        "output_tokens": 16
+      },
+      "total_tokens": 2864
+    },
+    {
+      "case": "spelling",
+      "repetition": 2,
+      "arm": "baseline",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.6426,
+      "cli_estimated_cost_usd": 0.0003662,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2022,
+        "output_tokens": 16
+      },
+      "total_tokens": 2040
+    },
+    {
+      "case": "rename",
+      "repetition": 2,
+      "arm": "baseline",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 3.2089,
+      "cli_estimated_cost_usd": 0.0004287,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2047,
+        "output_tokens": 22
+      },
+      "total_tokens": 2071
+    },
+    {
+      "case": "rename",
+      "repetition": 2,
+      "arm": "routed",
+      "requested_model": "haiku",
+      "effective_models": [
+        "claude-haiku-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 2.4892,
+      "cli_estimated_cost_usd": 3.9909999999999996e-05,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2871,
+        "output_tokens": 22
+      },
+      "total_tokens": 2895
+    },
+    {
+      "case": "json-format",
+      "repetition": 2,
+      "arm": "routed",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 3.2496,
+      "cli_estimated_cost_usd": 0.00048679999999999996,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2028,
+        "output_tokens": 28
+      },
+      "total_tokens": 2058
+    },
+    {
+      "case": "json-format",
+      "repetition": 2,
+      "arm": "baseline",
+      "requested_model": "sonnet",
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "model_confirmed": true,
+      "exit_code": 0,
+      "execution_ok": true,
+      "quality_passed": true,
+      "native_turns": 1,
+      "duration_seconds": 3.475,
+      "cli_estimated_cost_usd": 0.00048679999999999996,
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2028,
+        "output_tokens": 28
+      },
+      "total_tokens": 2058
+    }
+  ],
+  "stopped": null,
+  "claude_version": "2.1.323 (Claude Code)",
+  "source_sha256": "4ee153d13b89c07b6be8ee92eccf09e09bb2ab14e185bea24716a7b1bd91e7ae",
+  "summary": {
+    "complete": false,
+    "all_quality_passed": false,
+    "totals": {
+      "baseline": {
+        "calls": 9,
+        "quality_passed": 9,
+        "cost_usd": 0.0118187,
+        "seconds": 29.4648,
+        "tokens": 18647,
+        "measurements_complete": true
+      },
+      "routed": {
+        "calls": 9,
+        "quality_passed": 9,
+        "cost_usd": 0.00540077,
+        "seconds": 24.728099999999998,
+        "tokens": 22839,
+        "measurements_complete": true
+      }
+    },
+    "quality_valid_pairs": 9,
+    "quality_valid_pair_totals": {
+      "baseline": {
+        "cost_usd": 0.0118187,
+        "seconds": 29.4648
+      },
+      "routed": {
+        "cost_usd": 0.00540077,
+        "seconds": 24.728099999999998
+      }
+    },
+    "observed_reduction_percent": {
+      "cost_usd": null,
+      "seconds": null,
+      "tokens": null
+    },
+    "note": "Microtarefas sintéticas; custo estimado do CLI, não fatura. Sem garantia geral de qualidade/economia."
+  }
+}

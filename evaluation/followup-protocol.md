@@ -22,3 +22,12 @@ evidência de economia geral. Cache/ordem do segundo ensaio podem favorecer
 resultados; uma melhora aqui exige validação futura em tarefas reais diferentes
 antes de qualquer promessa mais ampla. Se custo/tokens/tempo não melhorarem,
 registrar isso sem declarar o objetivo comprovado.
+
+A primeira tentativa v4 foi interrompida após 18 execuções bem-sucedidas:
+o sistema devolveu ENOENT ao iniciar o executável nativo para a próxima
+chamada. A causa transitória não foi determinada; `claude --version` voltou
+a funcionar com a mesma versão 2.1.323. O relatório parcial está preservado
+em `real-results-v4-interrupted.json` e não é tratado como ensaio completo.
+O harness passou a registrar falhas de spawn como linhas de erro e a parar
+sem retry automático. Uma nova execução completa será identificada em outro
+arquivo; os custos da tentativa parcial não desaparecem do registro histórico.
