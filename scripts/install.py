@@ -108,7 +108,10 @@ def install(rollback=False):
                     shutil.rmtree(candidate)
         bin_dir.mkdir(parents=True, exist_ok=True)
         check_command(command, active)
-        link(active / "bin/ctr", command)
+        # The stable command never needs replacement. Exclusive symlink creation
+        # also preserves a foreign command that appears after the ownership check.
+        if not exists(command):
+            command.symlink_to(active / "bin/ctr")
     print(f"{'Rollback concluído' if rollback else 'Instalado'}: {command}")
     print(f"Se necessário, adicione {bin_dir} ao PATH. Verifique com: ctr doctor")
 

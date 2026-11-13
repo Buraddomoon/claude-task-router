@@ -69,6 +69,7 @@ O banco e as transcrições do Claude permanecem até serem removidos à parte.
   rollback seguido de retomada do mesmo UUID e verificação da integridade.
 - Migração do layout de venv legado e rollback com shebang funcional.
 - Recusa de arquivos, diretórios, symlinks quebrados, ambientes e backups alheios.
+- Preservação de um comando alheio criado por outro processo durante a ativação.
 - Migrações de bancos v1/v2/v3 e recusa de schema futuro (`test_migrations.py`).
 
 `tests/installed_smoke.py` falha se importar código da árvore fonte e verifica

@@ -1,6 +1,7 @@
 """End-to-end installer checks. Pip builds locally; Claude is always simulated."""
 
 import os
+import importlib.util
 from pathlib import Path
 import shutil
 import sqlite3
@@ -8,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -105,6 +107,30 @@ class InstallTests(unittest.TestCase):
         self.smoke()
         self.install("--rollback")
         self.smoke()  # Legacy shebang must still resolve via the stable name.
+
+    def test_foreign_command_created_during_activation_is_never_replaced(self):
+        spec = importlib.util.spec_from_file_location("ctr_installer", ROOT / "scripts/install.py")
+        installer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(installer)
+        self.bin_dir.mkdir()
+        self.active.mkdir()
+        (self.active / ".ctr-install").write_text(str(self.active))
+        command = self.bin_dir / "ctr"
+        real_exists = installer.exists
+
+        def competing_command(path):
+            # A foreign process wins creation between the last check and publish.
+            if path == command and self.active.is_symlink():
+                command.write_text("foreign command created concurrently")
+                return False
+            return real_exists(path)
+
+        with patch.dict(os.environ, self.env, clear=True), \
+             patch.object(installer, "exists", side_effect=competing_command), \
+             patch.object(installer.subprocess, "run"):
+            with self.assertRaises(FileExistsError):
+                installer.install()
+        self.assertEqual(command.read_text(), "foreign command created concurrently")
 
 
 if __name__ == "__main__":

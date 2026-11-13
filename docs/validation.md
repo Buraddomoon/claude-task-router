@@ -5,7 +5,7 @@ As descrições dos smokes anteriores abaixo mantêm seus limites históricos.
 
 ## Conferência V1.0
 
-A suíte final contém 58 testes e passou localmente em Linux/Python 3.14.3.
+A suíte final contém 59 testes e passou localmente em Linux/Python 3.14.3.
 Inclui SIGINT real em grupo de processos, corpus congelado, classificação
 local nos limites e os ensaios de instalação/atualização/rollback. Os
 [testes do artefato instalado](installation.md) exercitam o pacote fora da
