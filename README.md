@@ -2,7 +2,7 @@
 
 Launcher local que escolhe o modelo do Claude Code no início da tarefa e preserva a escolha nas continuações. Classificação determinística PT/EN, sem chamadas de IA, proxy ou dependências de runtime além da biblioteca padrão do Python.
 
-**Estado: V0.1 funcional; V1.0 ainda não concluída.** O fluxo básico está instalado e validado, mas há pendências de estabilidade da intenção de modelo diante de fallback, confirmação por execução, calibração independente e homologação interativa. Consulte os [critérios de prontidão](docs/readiness.md) e a [milestone V1.0](https://github.com/Buraddomoon/claude-task-router/milestone/2). A conclusão da V0.1 não significa conclusão do projeto.
+**Estado: V0.1 funcional; V1.0 ainda não concluída.** O fluxo básico está instalado e validado, a estabilidade da escolha, a confirmação por execução e a recuperação de sessões foram entregues na #12. Permanecem a calibração independente e a homologação final/interativa. Consulte os [critérios de prontidão](docs/readiness.md) e a [milestone V1.0](https://github.com/Buraddomoon/claude-task-router/milestone/2). A conclusão da V0.1 não significa conclusão do projeto.
 
 ## Instalar
 

@@ -183,8 +183,10 @@ class StateTests(unittest.TestCase):
                 path.write_text(json.dumps(dict(type="assistant", sessionId=self.task["id"],
                     timestamp=datetime.now(timezone.utc).isoformat(),
                     message=dict(model="claude-haiku-test"))) + "\n")
+                intercepted = []
                 def concurrent_open(target, *args, **kwargs):
-                    if target == path:
+                    if target.resolve() == path.resolve():
+                        intercepted.append(change)
                         if change == "execution":
                             self.store.launched(self.task["id"])
                         elif change == "manual_aba":
@@ -196,6 +198,7 @@ class StateTests(unittest.TestCase):
                     return original_open(target, *args, **kwargs)
                 with patch.object(Path, "open", new=concurrent_open):
                     self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
+                self.assertEqual(intercepted, [change])
                 task = self.store.get(self.task["id"])
                 self.assertIsNone(task["observed_at"])
                 self.assertEqual(task["model"], "haiku")
