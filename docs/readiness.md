@@ -1,33 +1,56 @@
 # Critérios de prontidão
 
-Revisão de 13/11/2026 após esclarecimento do usuário sobre o planejamento do projeto inteiro. A V0.1 entregou um launcher funcional, 31 testes e smoke real de criação/retomada. Todas as suas 11 issues foram concluídas, mas isso não estabelece prontidão final. A V1.0 permanece aberta até cumprir os critérios abaixo.
+O escopo V1.0 é um launcher local para Claude Code em Linux/macOS: início
+explícito da tarefa, decisão local, continuidade da sessão e controle manual.
+A V0.1 registrou o fluxo básico; a V1.0 acrescenta estabilidade por execução,
+recuperação, avaliação versionada, homologação interativa e atualização segura.
 
-O escopo final continua sendo o launcher local para Claude Code em Linux/macOS, com tarefa iniciada explicitamente, decisão local no início, continuidade e override manual. Não é necessário acrescentar interface web, proxy, Windows ou roteamento do Codex para concluir esse escopo.
+| Requisito | Entrega e evidência |
+| --- | --- |
+| Selecionar modelo por mecanismo real | Argumentos CLI e hooks, [arquitetura](architecture.md), `ctr doctor`, smokes reais |
+| Classificar localmente com critérios explícitos | #17/#18, [corpus, avaliação e limites](classifier-evaluation.md); zero inferência para classificação |
+| Escolher somente no início | #13/#14; regressões de retomada sem classificador/configuração atual |
+| Preservar escolha durante continuações | #12; escolha, ID compatível e observação separados; nova confirmação por execução |
+| Permitir alteração manual | #20; [/model em PTY real](interactive-qa.md), override em new/resume/model e testes offline |
+| Manter runtime leve e contexto sem instruções extras | Biblioteca padrão, benchmark local, hooks silenciosos e regressões |
+| Instalar, atualizar e recuperar | #15/#21; [gerações, rollback e testes do artefato](installation.md), migrações transacionais |
+| Conferir o escopo inteiro antes da versão final | #22; [matriz requisito → código → teste → evidência](final-audit.md) |
 
-| Requisito original | Evidência atual | O que falta para encerrar |
-| --- | --- | --- |
-| Pesquisar interfaces e usar mecanismo real para selecionar modelo | ADR, opções CLI verificadas e smoke real | Conferência final das interfaces suportadas em #22 |
-| Classificar localmente e priorizar economia/qualidade | Regras PT/EN e benchmark de latência | Avaliação independente e calibração em #17 e #18 |
-| Escolher somente no início, sem reclassificar continuação | Testes de new/resume e smoke real | Entregue em #13; model separado de effective_model e resolved_model |
-| Manter modelo durante as continuações | ID explícito persistido no fluxo básico | Entregue em #13/#14; divergências registradas e confirmação por execução, sem garantia sobre o provedor |
-| Permitir alteração manual | Comandos model/--model e hook simulados | Homologar /model no terminal real, #20 |
-| Solução leve, sem chamadas de classificação e sem instruções extras no contexto | Biblioteca padrão, zero inferência na classificação, hooks silenciosos | Manter esses limites na avaliação e regressão, #18 e #22 |
-| Instalar e usar com continuidade confiável | Comando local instalado, CI Linux/macOS | Recuperação e migrações entregues em #15; testes finais do artefato em #21 |
-| Planejar o projeto inteiro com issues/subissues | V0.1 encerrada e V1.0 com vínculos nativos | Encerrar somente mediante aceite das entregas #12, #16 e #19 |
+A entrega #12 cobre #13/#14/#15. A entrega #16 cobre #17/#18. A entrega #19
+cobre #20/#21/#22. Os vínculos são subissues nativas do GitHub, com evidências
+versionadas no repositório. Pais são encerrados somente após as partes
+estarem em main e verificadas.
 
-## Lacunas da revisão e situação após #12
+## Portas de lançamento
 
-- Corrigido em #13: eventos auto não substituem mais a escolha solicitada nem o ID compatível já fixado. A migração recupera escolhas manuais anteriores.
-- Corrigido em #14: cada execução invalida a confirmação anterior e recebe execution_id próprio; hooks e transcrições atrasados não substituem escolhas atuais.
-- “Renomeie a variável e corrija o algoritmo de consenso” recebe economy. O caso mostra que uma intenção trivial reconhecida pode dominar trabalho adicional não reconhecido (#17 e #18).
-- O smoke real validou print/new/resume; a interface interativa `/model` foi validada apenas por simulação (#20).
+A conferência final exige a suíte completa, os benchmarks, a avaliação com
+limites predefinidos, o wheel instalado fora do checkout e a matriz de CI
+Linux/Python 3.11 e 3.14 e macOS Intel/Python 3.14 no commit final.
+A release/tag `v1.0.0` é criada somente após esses checks; sua descrição
+identifica o commit e a execução de CI aprovados e inclui wheel com checksum.
+O número 1.0.0 nos arquivos de preparação não substitui essas portas.
 
-## Encerramento
+## Limites de aceite
 
-A [milestone V1.0](https://github.com/Buraddomoon/claude-task-router/milestone/2) tem três entregas:
+- O launcher preserva a escolha e pede confirmação ao controle nativo que
+  cobre fallbacks de conteúdo; não controla todas as políticas do provedor.
+  Cadeias por turno podem não produzir hook. `effective_model` é evidência
+  observada, não garantia sobre todas as respostas.
+- Sem hooks, o modelo efetivo pode ficar desconhecido. Isso é mostrado em
+  stderr/metadados; escolhas e IDs fixados anteriores continuam preservados.
+- O corpus pequeno e sintético avalia tiers contra uma rubrica explícita.
+  Não comprova qualidade de resposta, economia real ou anotação externa cega.
+  Linguagem indireta, contexto omitido e regras desconhecidas podem falhar;
+  há override e `min_tier`.
+- `recover` cria sessão nova e exige contexto fornecido pelo usuário; não
+  recupera histórico excluído. O banco do roteador não guarda conversas.
+- O `/model` nativo pode salvar o padrão global do Claude. Na versão testada,
+  o picker com tecla `s` permite mudar apenas a sessão; o launcher sempre
+  passa a escolha explícita da tarefa.
+- Runtime Linux/macOS, Python 3.11+, Claude Code 2.1.251+; homologação nativa
+  executada em Linux/Claude 2.1.323. macOS é coberto pela CI offline, sem
+  alegar homologação interativa de uma conta macOS.
+- IDE, backend Codex, Windows, dashboard e proxy permanecem fora do escopo.
 
-- Entrega implementada e validada: [#12 — estabilidade da escolha e recuperação](https://github.com/Buraddomoon/claude-task-router/issues/12), com #13, #14 e #15.
-- [#16 — classificação avaliada independentemente](https://github.com/Buraddomoon/claude-task-router/issues/16), com #17 e #18.
-- [#19 — homologação e versão final reproduzível](https://github.com/Buraddomoon/claude-task-router/issues/19), com #20, #21 e #22.
-
-A conferência #22 deve relacionar código, testes e evidências aos requisitos. Políticas internas do Claude/provedor precisam ter comportamento e limites explícitos; não podem ser apresentadas como garantia absoluta de um launcher externo. Não existe uma porcentagem de conclusão tecnicamente comprovada neste momento. Novas falhas encontradas nessa conferência devem ser registradas antes do encerramento, sem ampliar artificialmente o escopo.
+Os limites acima são fronteiras documentadas do produto. Falhas que violem
+esse contrato devem gerar uma nova issue antes de afirmar nova prontidão.

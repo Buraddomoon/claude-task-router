@@ -3,6 +3,31 @@
 Homologação posterior de `/model`, PTY, Ctrl-C e retomada: [issue #20](interactive-qa.md).
 As descrições dos smokes anteriores abaixo mantêm seus limites históricos.
 
+## Conferência V1.0
+
+A suíte final contém 58 testes e passou localmente em Linux/Python 3.14.3.
+Inclui SIGINT real em grupo de processos, corpus congelado, classificação
+local nos limites e os ensaios de instalação/atualização/rollback. Os
+[testes do artefato instalado](installation.md) exercitam o pacote fora da
+árvore fonte, recusando importação acidental do checkout. A CI #21 passou
+em Linux/Python 3.11 e 3.14 e macOS Intel/Python 3.14 no commit ea0f343
+([execução](https://github.com/Buraddomoon/claude-task-router/actions/runs/43476570467)).
+
+O [protocolo de avaliação](classifier-evaluation.md) registrou baseline de
+17/28 no desenvolvimento e resultado reservado de 28/28 após congelar as
+regras. p95 local reservado: 0,0262 ms típico e 18,6683 ms na entrada máxima
+de 256 KiB. São métricas de política sintética, não qualidade de respostas
+ou faturamento. O benchmark de 24 exemplos continua sendo regressão da
+política, com zero divergência após atualizar o caso de renomeação mecânica.
+
+A [conferência final](final-audit.md) mapeia requisitos a código e testes.
+O instalador também atualizou a instalação local de 0.1.0 para 1.0.0,
+preservando o venv legado para rollback. O entrypoint retornou 1.0.0;
+`doctor` aprovou Claude 2.1.323 e o smoke offline fora do checkout confirmou
+importação de site-packages e três chamadas simuladas de new/model/resume.
+A descrição da release v1.0.0 registra o SHA e a CI aprovados do commit
+final, além dos checksums do wheel efetivamente distribuído.
+
 Validação local em 13/11/2026, Linux, Python 3.14.3 e Claude Code 2.1.323.
 
 ## Testes automatizados

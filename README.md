@@ -2,7 +2,7 @@
 
 Launcher local que escolhe o modelo do Claude Code no início da tarefa e preserva a escolha nas continuações. Classificação determinística PT/EN, sem chamadas de IA, proxy ou dependências de runtime além da biblioteca padrão do Python.
 
-**Estado: V0.1 funcional; V1.0 ainda não concluída.** O fluxo básico está instalado e validado, a estabilidade da escolha, a confirmação por execução e a recuperação de sessões foram entregues na #12. Permanecem a calibração independente e a homologação final/interativa. Consulte os [critérios de prontidão](docs/readiness.md) e a [milestone V1.0](https://github.com/Buraddomoon/claude-task-router/milestone/2). A conclusão da V0.1 não significa conclusão do projeto.
+**V1.0 — launcher local implementado e homologado.** Seleção por tarefa, controle manual, retomada, recuperação, avaliação versionada e instalação com rollback. A [release v1.0.0](https://github.com/Buraddomoon/claude-task-router/releases/tag/v1.0.0) é liberada após a CI do commit final passar em Linux/macOS. Consulte a [conferência dos requisitos](docs/final-audit.md) e os [limites de prontidão](docs/readiness.md).
 
 ## Instalar
 
@@ -11,6 +11,7 @@ Requisitos: Linux/macOS, Python 3.11+, Claude Code 2.1.251+ instalado e autentic
 ```bash
 git clone https://github.com/Buraddomoon/claude-task-router.git
 cd claude-task-router
+git checkout v1.0.0
 bash scripts/install.sh
 ~/.local/bin/ctr doctor
 ```
@@ -105,7 +106,7 @@ O launcher passa `switchModelsOnFlag: false` nos settings da execução: o contr
 - Uma nova tarefa gerenciada começa em `ctr new`. Para mudar de assunto com nova classificação, saia do Claude e use esse comando novamente.
 - `/clear`, `/resume` e forks dentro do Claude seguem a semântica nativa e não criam tarefas no roteador. Para continuar uma tarefa gerenciada, use `ctr resume` após sair.
 - O launcher não reclassifica mensagens, não faz escalonamento no meio da tarefa e não configura fallback. O Claude/provedor ainda pode fazer substituições internas, inclusive em plan mode com Haiku. Para uma execução estritamente fixa, revise essas políticas nativas no seu ambiente.
-- Se hooks estiverem desativados por configuração/política, a sincronização automática não funciona; use ID explícito e `ctr model`. A ausência de observação é visível em `ctr show` e em stderr.
+- Se hooks estiverem desativados por configuração/política, a sincronização automática não funciona; use ID explícito e `ctr model`. A ausência de observação é visível em `ctr show` e em stderr. O modelo efetivo é uma observação de sessão, não uma garantia sobre cada resposta: cadeias nativas de fallback por turno podem não disparar PostModelSwitch.
 - Se o Claude falhar antes de salvar a conversa, a retomada nativa pode não encontrá-la. O roteador preserva metadados e código de erro, sem repetir a chamada. `ctr recover UUID` abre explicitamente outra sessão com a escolha/ID fixado, tier e configuração salvos, sem reclassificar. Forneça o contexto atual por argumento ou `--prompt-file`: o histórico anterior não é copiado. `--cwd` permite escolher um projeto substituto; a tarefa original permanece intacta e o evento `recovered_from` vincula as duas. `recover --dry-run` permite revisar sem executar.
 - O banco privado contém metadados, hash/tamanho do prompt e caminho da transcrição; não contém o texto do prompt nem o conteúdo das conversas. O Claude continua mantendo seu próprio histórico. Não há telemetria adicionada pelo roteador.
 - Há suporte de execução para Claude Code CLI; a pesquisa sobre Codex orientou a arquitetura. Esta versão não troca o modelo do Codex, de uma IDE já aberta ou de outros agentes.
@@ -122,4 +123,4 @@ python3 evaluation/run.py
 
 Os testes usam uma CLI simulada e não consomem IA. O benchmark reporta latência local e verifica exemplos sintéticos da política; não mede qualidade de respostas nem economia real de faturamento. Evidências do smoke real: [docs/validation.md](docs/validation.md).
 
-Etapas são acompanhadas por issues com subissues nativas e milestone `V0.1`, seguindo a estrutura do memory-os; [governança](docs/governance.md). A instalação é local; para atualizar, faça pull e execute novamente o instalador. Para desinstalar, remova o symlink `~/.local/bin/ctr` e o venv dedicado. Os metadados ficam em `~/.local/state/claude-task-router` para recuperação até você removê-los.
+Etapas são acompanhadas por issues com subissues nativas e milestones `V0.1`/`V1.0`, seguindo a estrutura do memory-os; [governança](docs/governance.md). A instalação é local; para atualizar uma versão fixada, faça fetch, selecione a tag desejada e execute novamente o instalador. Atualização, rollback e desinstalação estão no [guia de instalação](docs/installation.md). Os metadados ficam em `~/.local/state/claude-task-router` para recuperação até você removê-los.

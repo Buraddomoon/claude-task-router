@@ -32,7 +32,9 @@ com o roteador parado (padrão `~/.local/state/claude-task-router`, respeitando
 `XDG_STATE_HOME`/`--state-dir`). Essa cópia contém apenas metadados do roteador;
 o histórico nativo do Claude é separado.
 
-Faça pull do repositório e execute `bash scripts/install.sh` novamente.
+Faça fetch do repositório, selecione a tag desejada (por exemplo,
+`git fetch origin --tags` e `git checkout v1.0.0`) e execute
+`bash scripts/install.sh` novamente. Em main, pull também é possível.
 O instalador não abre o banco. A CLI migra schemas antigos transacionalmente
 ao ser executada, preservando tarefas, decisões, escolhas manuais e eventos.
 Depois confira `ctr --version`, `ctr status --all` e retome um UUID conhecido.
