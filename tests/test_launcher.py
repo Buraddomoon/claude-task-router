@@ -109,7 +109,7 @@ class LauncherTests(unittest.TestCase):
         other.mkdir()
         result = self.call("resume", self.task()["id"], cwd=other)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.logs()[-1]["cwd"], str(self.project))
+        self.assertEqual(self.logs()[-1]["cwd"], str(self.project.resolve()))
 
     def test_prompt_remains_literal_and_not_stored(self):
         marker = self.root / "PWNED"
