@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claude-task-router"
+version = "0.1.0"
+description = "Local-first, task-scoped model routing launcher for Claude Code"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+]
+
+[project.scripts]
+ctr = "claude_task_router.cli:main"
+
+[project.urls]
+Repository = "https://github.com/Buraddomoon/claude-task-router"
+Issues = "https://github.com/Buraddomoon/claude-task-router/issues"
+
+[tool.setuptools.packages.find]
+include = ["claude_task_router*"]

@@ -1,0 +1,11 @@
+{
+  "models": {
+    "economy": "haiku",
+    "balanced": "sonnet",
+    "advanced": "opus"
+  },
+  "min_tier": "economy",
+  "medium_words": 450,
+  "long_words": 1400,
+  "scan_chars": 65536
+}
