@@ -1,5 +1,8 @@
 # Evidências de validação
 
+Homologação posterior de `/model`, PTY, Ctrl-C e retomada: [issue #20](interactive-qa.md).
+As descrições dos smokes anteriores abaixo mantêm seus limites históricos.
+
 Validação local em 13/11/2026, Linux, Python 3.14.3 e Claude Code 2.1.323.
 
 ## Testes automatizados

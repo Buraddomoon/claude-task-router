@@ -30,7 +30,7 @@ class LauncherTests(unittest.TestCase):
         self.log = self.root / "fake.jsonl"
         self.env = dict(os.environ, FAKE_LOG=str(self.log), PYTHONPATH=str(ROOT))
         for key in ("FAKE_MANUAL_MODEL", "FAKE_SLEEP", "FAKE_EXIT", "FAKE_READY", "FAKE_NO_MODEL", "FAKE_AUTO_MODEL", "FAKE_NO_HOOKS",
-                    "FAKE_ABORT_BEFORE_SESSION", "FAKE_SESSION_DIR"):
+                    "FAKE_ABORT_BEFORE_SESSION", "FAKE_SESSION_DIR", "FAKE_SIGINT_CONTINUE"):
             self.env.pop(key, None)
         FAKE.chmod(0o755)
 
@@ -331,6 +331,40 @@ class LauncherTests(unittest.TestCase):
                                      "--state-dir", str(self.state_dir)], input=raw,
                                     text=True, capture_output=True)
             self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
+
+    def test_sigint_keeps_lock_until_child_exits_then_allows_resume(self):
+        ready = self.root / "sigint-ready"
+        process = subprocess.Popen(
+            [sys.executable, "-m", "claude_task_router", "--state-dir", str(self.state_dir),
+             "--claude-bin", str(FAKE), "new", "Fix typo"],
+            cwd=self.project, start_new_session=True,
+            env=dict(self.env, FAKE_SLEEP="30", FAKE_READY=str(ready), FAKE_SIGINT_CONTINUE="1"),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            deadline = time.monotonic() + 10
+            while not ready.exists() and time.monotonic() < deadline:
+                if process.poll() is not None:
+                    self.fail(process.communicate())
+                time.sleep(0.02)
+            self.assertTrue(ready.exists())
+            task = self.task()
+            # Terminal SIGINT reaches the whole foreground group. The native
+            # client may cancel input and remain alive after the first signal.
+            os.killpg(process.pid, signal.SIGINT)
+            result = self.call("resume", task["id"])
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("já está em execução", result.stderr)
+            os.killpg(process.pid, signal.SIGINT)
+            process.communicate(timeout=5)
+            self.assertEqual(process.returncode, 130)
+            self.assertEqual(self.task()["last_exit_code"], 130)
+            self.assertEqual(self.call("resume", task["id"]).returncode, 0)
+            self.assertEqual(self.logs()[-1]["session"], task["id"])
+            self.assertEqual(self.logs()[-1]["model"], task["resolved_model"])
+        finally:
+            if process.poll() is None:
+                os.killpg(process.pid, signal.SIGTERM)
+                process.communicate(timeout=5)
 
 
 if __name__ == "__main__":

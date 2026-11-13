@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 import subprocess
+import signal
 import sys
 import time
 
@@ -71,6 +72,16 @@ if os.environ.get("FAKE_MANUAL_MODEL"):
 if os.environ.get("FAKE_AUTO_MODEL"):
     hook("PostModelSwitch", dict(payload, hook_event_name="PostModelSwitch",
                                  to_model=os.environ["FAKE_AUTO_MODEL"], source="auto"))
+if os.environ.get("FAKE_SIGINT_CONTINUE"):
+    interrupts = 0
+
+    def interrupt(_signum, _frame):
+        global interrupts
+        interrupts += 1
+        if interrupts > 1:
+            sys.exit(130)
+
+    signal.signal(signal.SIGINT, interrupt)
 if os.environ.get("FAKE_READY"):
     Path(os.environ["FAKE_READY"]).touch()
 if os.environ.get("FAKE_SLEEP"):
