@@ -81,7 +81,8 @@ def build_command(binary: str, task: dict, state_dir: Path, prompt: str | None,
 def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], resume: bool) -> int:
     cwd = Path(task["cwd"])
     if not cwd.is_dir():
-        raise ValueError(f"Diretório original não existe: {cwd}")
+        raise ValueError(f"Diretório original não existe: {cwd}. Restaure-o ou use "
+                         f"ctr recover {task['id']} --cwd /diretorio/valido --prompt-file tarefa.txt.")
     validate_extra(extra)
     store.launched(task["id"])
     task = store.get(task["id"])
@@ -89,7 +90,12 @@ def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], re
     print(f"[ctr] tarefa={task['id']} solicitado={task['model']} modelo={launch_model(task)} "
           f"{'retomada' if resume else 'nova'}", file=sys.stderr)
     # Inherit terminal and environment; Claude retains its own auth and permissions.
-    child = subprocess.Popen(command, cwd=cwd)
+    try:
+        child = subprocess.Popen(command, cwd=cwd)
+    except OSError as exc:
+        store.finished(task["id"], 2)
+        raise ValueError(f"Não foi possível iniciar Claude: {exc}. Tarefa {task['id']} preservada; "
+                         "corrija o executável e use ctr resume, ou ctr recover se não houver sessão.") from exc
     handlers = {}
     def forward(signum, _frame):
         if child.poll() is None:
@@ -124,6 +130,12 @@ def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], re
     elif not matches_choice(launch_model(current), current["effective_model"]):
         print(f"[ctr] divergência: solicitado={current['model']} "
               f"efetivo={current['effective_model']}; escolha salva preservada.", file=sys.stderr)
+    if code:
+        print(f"[ctr] {'Retomada' if resume else 'Execução'} falhou ou foi interrompida "
+              f"(código {code}); tarefa {task['id']} preservada. Confira o erro do Claude. "
+              f"Tente ctr resume {task['id']}; se a sessão não existir, use "
+              f"ctr recover {task['id']} --prompt-file tarefa.txt para abrir outra sessão "
+              "com a mesma escolha. Nenhuma repetição automática foi feita.", file=sys.stderr)
     return code
 
 

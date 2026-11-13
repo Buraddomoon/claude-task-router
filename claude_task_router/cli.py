@@ -44,6 +44,12 @@ def parser():
     resume.add_argument("--prompt-file", type=Path)
     resume.add_argument("--model")
     resume.add_argument("--dry-run", action="store_true")
+    recover = subs.add_parser("recover", help="Abrir sessão substituta com a escolha salva, sem histórico")
+    recover.add_argument("task")
+    recover.add_argument("prompt", nargs="?", help="Contexto para a nova sessão; não reenvia a conversa anterior")
+    recover.add_argument("--prompt-file", type=Path)
+    recover.add_argument("--cwd", type=Path, help="Diretório substituto; padrão: projeto original")
+    recover.add_argument("--dry-run", action="store_true")
     model = subs.add_parser("model", help="Fixar modelo de uma tarefa inativa")
     model.add_argument("task")
     model.add_argument("model")
@@ -95,8 +101,8 @@ def main(argv=None) -> int:
     args = parser().parse_args(argv)
     try:
         validate_extra(extra)
-        if extra and args.command not in {"new", "resume"}:
-            raise ValueError("Argumentos Claude são aceitos somente em new/resume.")
+        if extra and args.command not in {"new", "resume", "recover"}:
+            raise ValueError("Argumentos Claude são aceitos somente em new/resume/recover.")
         if args.command == "doctor":
             result, code = doctor(args.claude_bin)
             dump(result)
@@ -152,6 +158,22 @@ def main(argv=None) -> int:
                 store.set_model(task["id"], model)
             print(f"{task['id']} → {model}")
             return 0
+        if args.command == "recover":
+            prompt = read_prompt(args, required=True)
+            cwd = (args.cwd or Path(task["cwd"])).expanduser().resolve()
+            if not cwd.is_dir():
+                raise ValueError(f"Diretório não existe: {cwd}. Use recover --cwd com um diretório válido.")
+            if args.dry_run:
+                dump(dict(recovered_from=task["id"], cwd=str(cwd), model=launch_model(task),
+                          reclassified=False, persisted=False, new_session=True))
+                return 0
+            binary = executable(args.claude_bin)
+            with store.task_lock(task["id"]):
+                replacement = store.recover(task["id"], cwd, prompt)
+            print(f"[ctr] recuperação de {task['id']} → {replacement['id']}; "
+                  "nova sessão sem histórico anterior, escolha salva preservada.", file=sys.stderr)
+            with store.task_lock(replacement["id"]):
+                return run(store, replacement, binary, prompt, extra, resume=False)
         if args.command == "resume":
             prompt = read_prompt(args, required=False)
             if args.model:

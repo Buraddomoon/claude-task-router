@@ -41,13 +41,16 @@ class Store:
         fd = os.open(self.path, os.O_CREAT | os.O_RDWR, 0o600)
         os.close(fd)
         with self.connect() as db:
+            # Serialize version detection and DDL in the same transaction. executescript
+            # would commit implicitly and let another process migrate the same schema.
+            db.execute("BEGIN IMMEDIATE")
             version = db.execute("PRAGMA user_version").fetchone()[0]
             if version not in (0, 1, 2, 3, 4):
                 raise ValueError(f"Banco de versão {version} não suportado.")
             if version == 1:
                 db.execute("ALTER TABLE tasks ADD COLUMN transcript_path TEXT")
                 db.execute("ALTER TABLE tasks ADD COLUMN hook_seen_at TEXT")
-            db.executescript("""
+            schema = """
                 CREATE TABLE IF NOT EXISTS tasks (
                     id TEXT PRIMARY KEY, cwd TEXT NOT NULL, model TEXT NOT NULL,
                     initial_model TEXT NOT NULL, tier TEXT NOT NULL,
@@ -61,21 +64,30 @@ class Store:
                     id INTEGER PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id),
                     at TEXT NOT NULL, kind TEXT NOT NULL, model TEXT, source TEXT
                 );
-            """)
+            """
+            for statement in schema.split(";"):
+                if statement.strip():
+                    db.execute(statement)
             if version < 3:
                 db.execute("ALTER TABLE tasks ADD COLUMN effective_model TEXT")
                 db.execute("ALTER TABLE tasks ADD COLUMN resolved_model TEXT")
                 # Recover intent from metadata, rather than promoting an old auto switch.
                 for row in db.execute("SELECT id,model,initial_model,observed_at FROM tasks").fetchall():
                     choice = row["initial_model"]
+                    resolved = None
                     for event in db.execute("SELECT kind,model,source FROM events WHERE task_id=? ORDER BY id",
                                             (row["id"],)).fetchall():
                         if event["model"] and (event["kind"] == "model_requested" or
                                 (event["kind"] == "PostModelSwitch" and event["source"] in
                                  {"command", "picker", "sdk"})):
                             choice = event["model"]
+                            resolved = None
+                        if (event["model"] and (event["kind"] in {"SessionStart", "model_resolved"} or
+                                (event["kind"] == "PostModelSwitch" and event["source"] in
+                                 {"command", "picker", "sdk"})) and
+                                matches_choice(resolved or choice, event["model"])):
+                            resolved = resolved or event["model"]
                     effective = row["model"] if row["observed_at"] else None
-                    resolved = effective if effective and matches_choice(choice, effective) else None
                     db.execute("UPDATE tasks SET model=?,effective_model=?,resolved_model=? WHERE id=?",
                                (choice, effective, resolved, row["id"]))
                 db.execute("PRAGMA user_version = 3")
@@ -113,6 +125,26 @@ class Store:
             db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
                        (task_id, timestamp, "created", model, decision["policy"]))
         return self.get(task_id)
+
+    def recover(self, task_id: str, cwd: Path, prompt: str) -> dict:
+        """Create an explicit replacement session, retaining the routing decision."""
+        task = self.get(task_id)
+        if not cwd.is_dir():
+            raise ValueError(f"Diretório não existe: {cwd}. Use recover --cwd com um diretório válido.")
+        replacement = str(uuid.uuid4())
+        timestamp = now()
+        with self.connect() as db:
+            db.execute("""INSERT INTO tasks
+                (id,cwd,model,initial_model,tier,decision_json,config_json,prompt_sha256,
+                 prompt_chars,created_at,updated_at,resolved_model)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (replacement, str(cwd.resolve()), task["model"], task["model"], task["tier"],
+                 json.dumps(task["decision"]), json.dumps(task["config"]),
+                 hashlib.sha256(prompt.encode()).hexdigest(), len(prompt), timestamp, timestamp,
+                 task["resolved_model"]))
+            db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
+                       (replacement, timestamp, "recovered_from", launch_model(task), task_id))
+        return self.get(replacement)
 
     def get(self, ref: str, cwd: Path | None = None) -> dict:
         with self.connect() as db:
@@ -267,9 +299,9 @@ class Store:
                 resolved = model if compatible else task["resolved_model"]
                 changed = db.execute("""UPDATE tasks SET effective_model=?,resolved_model=?,observed_at=?,updated_at=?
                     WHERE id=? AND observed_at IS NULL AND model=? AND execution_id=?
-                    AND choice_revision=?""",
+                    AND choice_revision=? AND hook_seen_at=?""",
                     (model, resolved, timestamp, timestamp, task_id, task["model"],
-                     task["execution_id"], task["choice_revision"])).rowcount
+                     task["execution_id"], task["choice_revision"], task["hook_seen_at"])).rowcount
                 if changed:
                     db.execute("INSERT INTO events(task_id,at,kind,model,source,execution_id) VALUES(?,?,?,?,?,?)",
                                (task_id, timestamp, "model_resolved", model, "transcript_tail", task["execution_id"]))

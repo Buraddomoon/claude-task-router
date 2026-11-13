@@ -4,7 +4,7 @@ Validação local em 13/11/2026, Linux, Python 3.14.3 e Claude Code 2.1.323.
 
 ## Testes automatizados
 
-`python3 -m unittest discover -s tests -v`: 31 testes passaram. A suíte usa apenas biblioteca padrão e uma CLI simulada, sem inferência. Cobre decisões PT/EN, configuração, prompts inválidos, persistência privada, resolução de IDs, migração de schema, argumentos literais, ausência de classificação/configuração na retomada, mudanças manuais, stdout, saída de erro, projeto original e concorrência real entre processos. SIGTERM é encaminhado ao filho, e o lock só é liberado após ele terminar.
+`python3 -m unittest discover -s tests -v`: 50 testes passaram após #12 (31 na V0.1). A suíte usa apenas biblioteca padrão e uma CLI simulada, sem inferência. Cobre decisões PT/EN, configuração, prompts inválidos, persistência privada, resolução de IDs, migração de schema, argumentos literais, ausência de classificação/configuração na retomada, mudanças manuais, stdout, saída de erro, projeto original e concorrência real entre processos. SIGTERM é encaminhado ao filho, e o lock só é liberado após ele terminar.
 
 Os hooks são exercitados como subprocessos reais, inclusive a partir de diretórios com espaços e apóstrofo. Payloads inválidos e sessões não gerenciadas não injetam saída. A recuperação do modelo não aceita respostas de outra sessão, respostas antigas nem caminhos externos à árvore de transcrições do Claude. Um evento manual observado tem prioridade.
 
@@ -22,7 +22,7 @@ Os hooks são exercitados como subprocessos reais, inclusive a partir de diretó
 
 Esses exemplos verificam a política implementada, não constituem um dataset independente de dificuldade. Os números não demonstram qualidade de resposta, redução de tokens da tarefa ou economia de faturamento; variam com a máquina.
 
-## Contrato com o Claude real
+## Contrato com o Claude real — smoke original V0.1
 
 Um smoke inicial executou uma chamada curta em modo print e revelou que SessionStart não trouxe o campo opcional `model`. Esse comportamento motivou a subissue #10 e a leitura local limitada do final da transcrição.
 
@@ -41,3 +41,17 @@ Controle nativo conferido no --help do Claude 2.1.323 e na documentação oficia
 ## Issue #14 — confirmação por execução
 
 Cada lançamento cria execution_id antes de iniciar o subprocesso; o token segue no comando dos hooks e nos eventos observados. A suíte verifica retomada sem hooks após execução confirmada, payload parcial, hook sem token, hook atrasado da execução anterior ou posterior à saída, e SessionStart atrasado após mudança manual. A leitura da transcrição exige hook da execução atual, timestamps dentro da execução e posteriores ao último hook/override; uma comparação atômica inclui execution_id e revisão da escolha para não sobrescrever alterações concorrentes. O ID já fixado permanece disponível sem ser apresentado como confirmação atual.
+
+## Issue #15 — recuperação e migrações
+
+A suíte cobre falha antes de salvar sessão, sessão excluída, diretório removido, falha em Popen e recuperação explícita sem classificação/configuração nova. Verifica modelo/ID compatível, integridade, vínculo de origem, isolamento da tarefa original, ausência do prompt no banco e ausência de retry. A recuperação também respeita o lock de tarefas em execução. SIGTERM preserva código 143 e só libera o lock após o filho terminar.
+
+Migrações v1/v2 recuperam a escolha manual, incluindo fallback automático da mesma família sem substituir o ID original. A migração v3 mantém escolha e ID fixado e limpa confirmação antiga. Inicialização nova e migrações v1/v2 são disputadas por seis processos reais, preservando todas as tarefas e eventos. integrity_check=ok e foreign_key_check vazio. Uma falha induzida no meio da migração reverte DDL e dados; a execução seguinte migra normalmente. Versão futura não é rebaixada.
+
+Regressões adicionais forçam alterações entre leitura e gravação da reconciliação: nova execução, troca manual que volta ao mesmo modelo e hook parcial. O compare-and-set rejeita as três condições.
+
+### Smoke real após #12
+
+Claude Code 2.1.323, Linux, 13/11/2026, ferramentas desabilitadas e limite explícito de US$ 0,03 por chamada. Uma tarefa criada apenas no banco foi retomada no CLI real: sessão inexistente retornou código 1, metadados preservados e instrução ctr recover, sem repetição automática. recover abriu um UUID substituto, mantendo a escolha haiku, e a resposta confirmou claude-haiku-5-5. Uma retomada subsequente usou esse ID e o mesmo UUID substituto, com novo execution_id e confirmação atual. Recuperação e retomada retornaram código 0 e resposta OK. Duas chamadas de inferência, custos reportados pelo CLI de US$ 0,00058129 e US$ 0,00070073; não são faturamento da conta. Nenhuma chamada para classificar.
+
+Não foram induzidos fallbacks de conteúdo reais nem mudança interativa pelo picker neste smoke; esses caminhos têm regressões simuladas e a homologação interativa continua em #20.

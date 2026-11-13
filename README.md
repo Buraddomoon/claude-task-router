@@ -40,6 +40,12 @@ ctr resume latest --model sonnet
 # Alterar a escolha de uma tarefa que está parada
 ctr model latest opus
 
+# Se a conversa não existir mais: nova sessão com a escolha salva
+ctr recover UUID --prompt-file contexto-atual.txt
+
+# Se o projeto original foi removido ou mudou de lugar
+ctr recover UUID --cwd /novo/projeto --prompt-file contexto-atual.txt
+
 # Durante a sessão interativa, /model continua disponível
 ```
 
@@ -100,7 +106,7 @@ O launcher passa `switchModelsOnFlag: false` nos settings da execução: o contr
 - `/clear`, `/resume` e forks dentro do Claude seguem a semântica nativa e não criam tarefas no roteador. Para continuar uma tarefa gerenciada, use `ctr resume` após sair.
 - O launcher não reclassifica mensagens, não faz escalonamento no meio da tarefa e não configura fallback. O Claude/provedor ainda pode fazer substituições internas, inclusive em plan mode com Haiku. Para uma execução estritamente fixa, revise essas políticas nativas no seu ambiente.
 - Se hooks estiverem desativados por configuração/política, a sincronização automática não funciona; use ID explícito e `ctr model`. A ausência de observação é visível em `ctr show` e em stderr.
-- Se o Claude falhar antes de salvar a conversa, a retomada nativa pode não encontrá-la. O roteador preserva metadados e código de erro, sem tentar novamente com outro modelo. Corrija a causa e inicie uma nova tarefa quando necessário.
+- Se o Claude falhar antes de salvar a conversa, a retomada nativa pode não encontrá-la. O roteador preserva metadados e código de erro, sem repetir a chamada. `ctr recover UUID` abre explicitamente outra sessão com a escolha/ID fixado, tier e configuração salvos, sem reclassificar. Forneça o contexto atual por argumento ou `--prompt-file`: o histórico anterior não é copiado. `--cwd` permite escolher um projeto substituto; a tarefa original permanece intacta e o evento `recovered_from` vincula as duas. `recover --dry-run` permite revisar sem executar.
 - O banco privado contém metadados, hash/tamanho do prompt e caminho da transcrição; não contém o texto do prompt nem o conteúdo das conversas. O Claude continua mantendo seu próprio histórico. Não há telemetria adicionada pelo roteador.
 - Há suporte de execução para Claude Code CLI; a pesquisa sobre Codex orientou a arquitetura. Esta versão não troca o modelo do Codex, de uma IDE já aberta ou de outros agentes.
 

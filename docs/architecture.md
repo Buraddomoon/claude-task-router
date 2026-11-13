@@ -38,3 +38,7 @@ SQLite guarda UUID, diretório de trabalho, modelo solicitado, ID resolvido comp
 - Linux/macOS, Python 3.11+. Windows nativo, proxy de API, roteamento automático dentro de IDE e um backend Codex ficam fora deste incremento.
 
 Observações são vinculadas a execution_id, criado antes de Popen e incluído nos comandos dos hooks. O início limpa observed_at, effective_model, hook_seen_at e caminho de transcrição da execução anterior, preservando model/resolved_model. Hooks só atualizam a execução corrente ainda aberta. Transcrições exigem evidência atual, intervalo temporal válido e comparação atômica de execução e choice_revision; nenhuma transação permanece aberta durante leitura de conteúdo ou execução do Claude.
+
+`recover` cria um UUID novo e preserva escolha, ID compatível, tier, decisão e snapshot de configuração da tarefa original. Exige contexto explícito, não copia a conversa nem classifica novamente. A origem fica em recovered_from; a tarefa original não é reescrita. --cwd permite recuperar em outro diretório. Falhas preservam o código do Claude e mostram como retomar/recuperar, sem retry remoto.
+
+As migrações de schema são serializadas com BEGIN IMMEDIATE antes de consultar user_version. DDL e versão ficam numa única transação, sem executescript/commit implícito. Bancos v1/v2 reconstroem a intenção pelos eventos manuais e só recuperam IDs compatíveis de eventos não automáticos; v3 mantém escolha e ID, invalidando observações sem identidade de execução. Falhas durante a migração revertem schema e dados; versões futuras são recusadas.

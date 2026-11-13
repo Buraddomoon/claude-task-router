@@ -168,6 +168,38 @@ class StateTests(unittest.TestCase):
             self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
             self.assertIsNone(self.store.get(self.task["id"])["observed_at"])
 
+    def test_reconciliation_compare_and_set_rejects_concurrent_changes(self):
+        config = self.cwd / "claude-config"
+        path = config / "projects/fake" / (self.task["id"] + ".jsonl")
+        path.parent.mkdir(parents=True)
+        original_open = Path.open
+        for change in ("execution", "manual_aba", "partial_hook"):
+            with self.subTest(change=change), patch.dict("os.environ", CLAUDE_CONFIG_DIR=str(config)):
+                self.store.set_model(self.task["id"], "haiku")
+                self.execution_id = self.store.launched(self.task["id"])
+                payload = dict(session_id=self.task["id"], cwd=str(self.cwd), source="startup",
+                    hook_event_name="SessionStart", transcript_path=str(path))
+                self.assertTrue(self.observe(payload))
+                path.write_text(json.dumps(dict(type="assistant", sessionId=self.task["id"],
+                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    message=dict(model="claude-haiku-test"))) + "\n")
+                def concurrent_open(target, *args, **kwargs):
+                    if target == path:
+                        if change == "execution":
+                            self.store.launched(self.task["id"])
+                        elif change == "manual_aba":
+                            self.store.set_model(self.task["id"], "opus")
+                            self.store.set_model(self.task["id"], "haiku")
+                        else:
+                            self.assertTrue(self.observe(dict(payload, source="auto",
+                                hook_event_name="PostModelSwitch")))
+                    return original_open(target, *args, **kwargs)
+                with patch.object(Path, "open", new=concurrent_open):
+                    self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
+                task = self.store.get(self.task["id"])
+                self.assertIsNone(task["observed_at"])
+                self.assertEqual(task["model"], "haiku")
+
     def test_transcript_path_is_restricted(self):
         self.assertIsNone(self.store.valid_transcript("/etc/passwd", self.task["id"]))
         self.assertIsNone(self.store.valid_transcript(str(self.cwd / (self.task["id"] + ".jsonl")),

@@ -24,6 +24,21 @@ def value(flag):
 
 session = value("--resume" if "--resume" in args else "--session-id")
 model = value("--model")
+if os.environ.get("FAKE_LOG"):
+    with open(os.environ["FAKE_LOG"], "a") as stream:
+        stream.write(json.dumps(dict(argv=args, cwd=str(Path.cwd()), session=session,
+                                     model=model)) + "\n")
+# Optional native-session persistence for recovery tests.
+if os.environ.get("FAKE_ABORT_BEFORE_SESSION"):
+    sys.exit(130)
+if os.environ.get("FAKE_SESSION_DIR"):
+    sessions = Path(os.environ["FAKE_SESSION_DIR"])
+    sessions.mkdir(parents=True, exist_ok=True)
+    session_file = sessions / session
+    if "--resume" in args and not session_file.exists():
+        print("No conversation found with session ID: " + session, file=sys.stderr)
+        sys.exit(1)
+    session_file.touch()
 settings = json.loads(value("--settings"))
 source = "resume" if "--resume" in args else "startup"
 active = {"haiku": "claude-haiku-test-001", "sonnet": "claude-sonnet-test-001",
@@ -56,10 +71,6 @@ if os.environ.get("FAKE_MANUAL_MODEL"):
 if os.environ.get("FAKE_AUTO_MODEL"):
     hook("PostModelSwitch", dict(payload, hook_event_name="PostModelSwitch",
                                  to_model=os.environ["FAKE_AUTO_MODEL"], source="auto"))
-if os.environ.get("FAKE_LOG"):
-    with open(os.environ["FAKE_LOG"], "a") as stream:
-        stream.write(json.dumps(dict(argv=args, cwd=str(Path.cwd()), session=session,
-                                     model=model)) + "\n")
 if os.environ.get("FAKE_READY"):
     Path(os.environ["FAKE_READY"]).touch()
 if os.environ.get("FAKE_SLEEP"):

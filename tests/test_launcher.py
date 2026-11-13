@@ -29,7 +29,8 @@ class LauncherTests(unittest.TestCase):
         self.state_dir = self.root / "state"
         self.log = self.root / "fake.jsonl"
         self.env = dict(os.environ, FAKE_LOG=str(self.log), PYTHONPATH=str(ROOT))
-        for key in ("FAKE_MANUAL_MODEL", "FAKE_SLEEP", "FAKE_EXIT", "FAKE_READY", "FAKE_NO_MODEL", "FAKE_AUTO_MODEL", "FAKE_NO_HOOKS"):
+        for key in ("FAKE_MANUAL_MODEL", "FAKE_SLEEP", "FAKE_EXIT", "FAKE_READY", "FAKE_NO_MODEL", "FAKE_AUTO_MODEL", "FAKE_NO_HOOKS",
+                    "FAKE_ABORT_BEFORE_SESSION", "FAKE_SESSION_DIR"):
             self.env.pop(key, None)
         FAKE.chmod(0o755)
 
@@ -172,6 +173,97 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertFalse(fresh.exists())
 
+    def test_aborted_first_launch_and_missing_session_recover_explicitly(self):
+        sessions = self.root / "native-sessions"
+        env = dict(self.env, FAKE_SESSION_DIR=str(sessions))
+        first = self.call("new", "Fix typo", "--model", "opus",
+                          env=dict(env, FAKE_ABORT_BEFORE_SESSION="1"))
+        self.assertEqual(first.returncode, 130, first.stderr)
+        original = self.task()
+        self.assertEqual(original["last_exit_code"], 130)
+        self.assertIsNotNone(original["finished_at"])
+        self.assertIn("ctr recover", first.stderr)
+        failed = self.call("resume", original["id"], env=env)
+        self.assertEqual(failed.returncode, 1, failed.stderr)
+        self.assertIn("No conversation found", failed.stderr)
+        self.assertIn("ctr recover", failed.stderr)
+        self.assertEqual(len(self.logs()), 2)  # No hidden retry.
+        recovered = self.call("--config", "missing.json", "recover", original["id"],
+                              "Fresh context SECRET-RECOVERY-PROMPT", env=env)
+        self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        replacement = self.task()
+        self.assertNotEqual(replacement["id"], original["id"])
+        self.assertEqual(replacement["model"], "opus")
+        self.assertEqual(replacement["config"], original["config"])
+        self.assertEqual(replacement["decision"], original["decision"])
+        event = Store(self.state_dir).events(replacement["id"])[0]
+        self.assertEqual((event["kind"], event["source"]), ("recovered_from", original["id"]))
+        self.assertEqual(Store(self.state_dir).get(original["id"])["last_exit_code"], 1)
+        self.assertNotIn(b"SECRET-RECOVERY-PROMPT", Store(self.state_dir).path.read_bytes())
+        self.assertIn("--session-id", self.logs()[-1]["argv"])
+        self.assertEqual(self.call("resume", replacement["id"], env=env).returncode, 0)
+
+    def test_deleted_native_session_and_removed_project_have_actionable_recovery(self):
+        sessions = self.root / "native-sessions"
+        env = dict(self.env, FAKE_SESSION_DIR=str(sessions))
+        self.assertEqual(self.call("new", "Fix typo", env=env).returncode, 0)
+        original = self.task()
+        (sessions / original["id"]).unlink()
+        result = self.call("resume", original["id"], env=env)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ctr recover", result.stderr)
+        self.project.rmdir()
+        before = len(self.logs())
+        result = self.call("resume", original["id"], cwd=self.root, env=env)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--cwd", result.stderr)
+        self.assertEqual(len(self.logs()), before)
+        other = self.root / "replacement-project"
+        other.mkdir()
+        recovered = self.call("recover", original["id"], "Resume this work", "--cwd", str(other),
+                              cwd=self.root, env=env)
+        self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        task = Store(self.state_dir).get("latest", other)
+        self.assertEqual(task["model"], original["model"])
+        self.assertEqual(task["resolved_model"], original["resolved_model"])
+        self.assertEqual(self.logs()[-1]["model"], original["resolved_model"])
+        self.assertEqual(Store(self.state_dir).get(original["id"])["cwd"], original["cwd"])
+
+    def test_recovery_dry_run_and_missing_context_do_not_create_tasks(self):
+        self.assertEqual(self.call("new", "Fix typo").returncode, 0)
+        task = self.task()
+        before = Store(self.state_dir).events(task["id"])
+        result = self.call("recover", task["id"], "fresh context", "--dry-run")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(json.loads(result.stdout)["reclassified"])
+        self.assertEqual(self.task()["id"], task["id"])
+        self.assertEqual(len(self.logs()), 1)
+        self.assertEqual(Store(self.state_dir).events(task["id"]), before)
+        result = self.call("recover", task["id"])
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(len(self.logs()), 1)
+
+    def test_recovery_never_loads_config_or_classifies(self):
+        self.assertEqual(self.call("new", "Fix typo").returncode, 0)
+        with patch("claude_task_router.cli.load_config", side_effect=AssertionError("config")), \
+             patch("claude_task_router.cli.classify", side_effect=AssertionError("classifier")), \
+             redirect_stderr(io.StringIO()), redirect_stdout(io.StringIO()):
+            self.assertEqual(main(["--state-dir", str(self.state_dir), "--claude-bin", str(FAKE),
+                                   "recover", self.task()["id"], "Fresh context"]), 0)
+
+    def test_spawn_failure_records_completion_and_preserves_task(self):
+        with patch("claude_task_router.launcher.subprocess.Popen", side_effect=OSError("cannot start")), \
+             redirect_stderr(io.StringIO()) as err:
+            code = main(["--state-dir", str(self.state_dir), "--claude-bin", str(FAKE),
+                         "new", "Fix typo", "--cwd", str(self.project)])
+        self.assertEqual(code, 2)
+        self.assertIn("ctr recover", err.getvalue())
+        task = self.task()
+        self.assertEqual(task["last_exit_code"], 2)
+        self.assertIsNotNone(task["finished_at"])
+        self.assertEqual(task["model"], "haiku")
+        self.assertEqual(self.call("resume", task["id"]).returncode, 0)
+
     def test_dangerous_session_flags_rejected_before_creation(self):
         for args in (["--model", "opus"], ["--model=opus"], ["--resume", "x"],
                      ["--settings", "{}"], ["--fork-session"], ["--bare"], ["-pX"],
@@ -216,7 +308,8 @@ class LauncherTests(unittest.TestCase):
                 time.sleep(0.02)
             self.assertTrue(ready.exists())
             task_id = self.task()["id"]
-            for args in (("resume", task_id), ("model", task_id, "opus")):
+            for args in (("resume", task_id), ("model", task_id, "opus"),
+                         ("recover", task_id, "fresh context")):
                 result = self.call(*args)
                 self.assertEqual(result.returncode, 2)
                 self.assertIn("já está em execução", result.stderr)
