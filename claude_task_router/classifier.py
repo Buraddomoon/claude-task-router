@@ -23,7 +23,8 @@ RULES = (
         r"\b(arquitet\w*|architect\w*|distributed\s+system\w*|sistemas? distribuidos?|"
         r"race condition\w*|condic\w* de corrida|deadlock\w*|"
         r"intermittent\w*|intermitente\w*|root cause|causa raiz|"
-        r"redesign|reestrutur\w*|threat model\w*)\b")),
+        r"redesign|reestrutur\w*|threat model\w*|consens\w*|quorum|"
+        r"leader election|eleicao de lider|tolerancia a falhas)\b")),
     ("broad_scope", 3, re.compile(
         r"\b(refator\w*|refactor\w*|multi[- ]?(?:service|repo|module)\w*|"
         r"varios (?:servicos|modulos)|ponta a ponta|end[- ]to[- ]end|"
@@ -32,12 +33,37 @@ RULES = (
         r"\b(implement\w*|desenvolv\w*|build|feature\w*|funcionalidade\w*|"
         r"crie|criar|create|adicione|adicionar|add|bug\w*|endpoint\w*)\b")),
 )
-TRIVIAL = re.compile(
-    r"\b(typo\w*|ortograf\w*|spelling|renome\w*|rename|"
-    r"tradu\w*|translat\w*|formate|formatar|format|"
-    r"resuma|resumir|summari\w*|explique (?:este|esse|o) comando|"
-    r"explain (?:this|the) command)\b")
 PATHS = re.compile(r"(?<!\w)(?:[\w.-]+/)+[\w.-]+|\b[\w-]+\.(?:py|js|ts|tsx|jsx|go|rs|md|json|yaml)\b")
+QUOTED = re.compile(r'```[\s\S]*?(?:```|$)|`[^`\n]*`|"[^"\n]*"|“[^”\n]*”|‘[^’\n]*’|(?<!\w)\'[^\'\n]*\'(?!\w)')
+CLAUSES = re.compile(r"[.;!?\n]+|,\s*|\s+(?:e|and|then|while|enquanto|depois|tambem|also|plus|"
+                     r"alem de|bem como|as well as|mas|but|porem|however)\s+")
+NEGATIVE = re.compile(
+    r"\b(?:nao|do not|don't|never|nunca|sem|without)\s+"
+    r"(?:alter\w*|mud\w*|implement\w*|modifi\w*|renom\w*|rename|change|changing|"
+    r"touch\w*|fix|corrij\w*)\b.*$")
+SIMPLE_ACTION = re.compile(
+    r"^(?:(?:please|por favor)\s+)?(?:"
+    r"(?:fix|correct|corrij\w*|revise)\s+(?:(?:the|a|o|os|as|only|somente|apenas)\s+)*"
+    r"(?:typo\w*|ortograf\w*|spelling)|"
+    r"renome\w*|rename|tradu\w*|translate|formate|formatar|format|resuma|resumir|summari\w*|"
+    r"explique (?:este|esse|o) comando|explain (?:this|the) command)\b")
+OTHER_ACTION = re.compile(
+    r"\b(?:implement\w*|desenvolv\w*|build|crie|criar|create|adicion\w*|add|"
+    r"corrij\w*|fix|repair|resolv\w*|solve|investig\w*|diagnos\w*|projete|design|"
+    r"refator\w*|refactor\w*|redesign|reestrutur\w*|optimiz\w*|otimiz\w*)\b")
+
+
+def requested_work(text: str) -> tuple[str, bool]:
+    """Conservative clause heuristic, not a parser or semantic risk assessment."""
+    work = PATHS.sub(" reference ", QUOTED.sub(" literal ", text))
+    clauses = [NEGATIVE.sub("", clause).strip() for clause in CLAUSES.split(work)]
+    clauses = [clause for clause in clauses if clause]
+    simple = bool(clauses)
+    for clause in clauses:
+        match = SIMPLE_ACTION.match(clause)
+        if not match or OTHER_ACTION.search(clause[match.end():]):
+            simple = False
+    return " ; ".join(clauses), simple
 
 
 @dataclass(frozen=True)
@@ -48,7 +74,7 @@ class Decision:
     reasons: tuple[str, ...]
     scanned_chars: int
     total_chars: int
-    policy: str = "local-rules-v1"
+    policy: str = "local-rules-v2"
 
     def to_dict(self):
         return asdict(self)
@@ -68,11 +94,12 @@ def classify(prompt: str, config: Config | None = None) -> Decision:
     config = config or Config()
     validate_prompt(prompt)
     text = normalize(prompt[:config.scan_chars])
+    work, simple = requested_work(text)
     words = len(text.split())
     reasons = []
     score = 0
     for reason, weight, pattern in RULES:
-        if pattern.search(text):
+        if not simple and pattern.search(work):
             reasons.append(reason)
             score += weight
     paths = len(set(PATHS.findall(text)))
@@ -90,7 +117,7 @@ def classify(prompt: str, config: Config | None = None) -> Decision:
         reasons.append("scan_limit_reached")
     if score >= 5:
         tier = "advanced"
-    elif score == 0 and TRIVIAL.search(text) and words <= 100 and paths <= 2 and not truncated:
+    elif score == 0 and simple and words <= 100 and paths <= 2 and not truncated:
         tier = "economy"
         reasons.append("bounded_simple_intent")
     else:

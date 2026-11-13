@@ -21,6 +21,6 @@
   {"prompt":"Implement encrypted payment processing", "tier":"advanced"},
   {"prompt":"Conduza uma auditoria de segurança", "tier":"advanced"},
   {"prompt":"Fix typo and redesign the architecture", "tier":"advanced"},
-  {"prompt":"Renomeie a variável authenticationHandler", "tier":"advanced"},
+  {"prompt":"Renomeie a variável authenticationHandler", "tier":"economy"},
   {"prompt":"Crie uma aplicação completa ponta a ponta", "tier":"advanced"}
 ]
