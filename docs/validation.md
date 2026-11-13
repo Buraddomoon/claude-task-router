@@ -55,3 +55,7 @@ Regressões adicionais forçam alterações entre leitura e gravação da reconc
 Claude Code 2.1.323, Linux, 13/11/2026, ferramentas desabilitadas e limite explícito de US$ 0,03 por chamada. Uma tarefa criada apenas no banco foi retomada no CLI real: sessão inexistente retornou código 1, metadados preservados e instrução ctr recover, sem repetição automática. recover abriu um UUID substituto, mantendo a escolha haiku, e a resposta confirmou claude-haiku-5-5. Uma retomada subsequente usou esse ID e o mesmo UUID substituto, com novo execution_id e confirmação atual. Recuperação e retomada retornaram código 0 e resposta OK. Duas chamadas de inferência, custos reportados pelo CLI de US$ 0,00058129 e US$ 0,00070073; não são faturamento da conta. Nenhuma chamada para classificar.
 
 Não foram induzidos fallbacks de conteúdo reais nem mudança interativa pelo picker neste smoke; esses caminhos têm regressões simuladas e a homologação interativa continua em #20.
+
+### Execução da CI
+
+A execução 43465530134 passou em Linux/Python 3.11 e 3.14, mas o job macos-latest foi cancelado antes de obter runner. As anotações do GitHub apontaram falta de capacidade nos runners macOS arm64, sem executar qualquer step. A matriz passou a usar macos-15-intel, label x64 oficial do [catálogo de runners](https://github.com/actions/runner-images), para concluir a validação macOS com Python 3.14.
