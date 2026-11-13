@@ -1,0 +1,506 @@
+[
+  {
+    "id": "task-001",
+    "split": "development",
+    "language": "pt",
+    "category": "simple",
+    "prompt": "Revise somente a ortografia deste comentário curto.",
+    "tier": "economy",
+    "rationale": "Correção mecânica delimitada."
+  },
+  {
+    "id": "task-002",
+    "split": "development",
+    "language": "en",
+    "category": "simple",
+    "prompt": "Rename customerNmae to customerName in this function.",
+    "tier": "economy",
+    "rationale": "Renomeação local sem mudança de comportamento."
+  },
+  {
+    "id": "task-003",
+    "split": "development",
+    "language": "pt",
+    "category": "simple",
+    "prompt": "Formate este documento JSON de vinte linhas.",
+    "tier": "economy",
+    "rationale": "Formatação delimitada."
+  },
+  {
+    "id": "task-004",
+    "split": "development",
+    "language": "en",
+    "category": "simple",
+    "prompt": "Translate this one-line comment into French.",
+    "tier": "economy",
+    "rationale": "Tradução curta."
+  },
+  {
+    "id": "task-005",
+    "split": "development",
+    "language": "pt",
+    "category": "common",
+    "prompt": "Ajuste o filtro da lista para aceitar datas vazias.",
+    "tier": "balanced",
+    "rationale": "Mudança usual de comportamento."
+  },
+  {
+    "id": "task-006",
+    "split": "development",
+    "language": "en",
+    "category": "common",
+    "prompt": "Write unit tests for an existing price formatter.",
+    "tier": "balanced",
+    "rationale": "Trabalho comum de programação."
+  },
+  {
+    "id": "task-007",
+    "split": "development",
+    "language": "pt",
+    "category": "common",
+    "prompt": "Inclua paginação no catálogo de produtos.",
+    "tier": "balanced",
+    "rationale": "Feature delimitada sem risco especial."
+  },
+  {
+    "id": "task-008",
+    "split": "development",
+    "language": "en",
+    "category": "common",
+    "prompt": "Repair the off-by-one error in the page counter.",
+    "tier": "balanced",
+    "rationale": "Correção funcional delimitada."
+  },
+  {
+    "id": "task-009",
+    "split": "development",
+    "language": "pt",
+    "category": "complex",
+    "prompt": "Projete replicação com consenso e tolerância a falhas.",
+    "tier": "advanced",
+    "rationale": "Corretude distribuída e falhas."
+  },
+  {
+    "id": "task-010",
+    "split": "development",
+    "language": "en",
+    "category": "complex",
+    "prompt": "Investigate a production incident losing customer orders.",
+    "tier": "advanced",
+    "rationale": "Incidente com perda de dados."
+  },
+  {
+    "id": "task-011",
+    "split": "development",
+    "language": "pt",
+    "category": "complex",
+    "prompt": "Planeje uma migração de dados de clientes sem indisponibilidade.",
+    "tier": "advanced",
+    "rationale": "Operação de dados com risco."
+  },
+  {
+    "id": "task-012",
+    "split": "development",
+    "language": "en",
+    "category": "complex",
+    "prompt": "Implement OAuth token validation and key rotation.",
+    "tier": "advanced",
+    "rationale": "Controle de acesso sensível."
+  },
+  {
+    "id": "task-013",
+    "split": "development",
+    "language": "pt",
+    "category": "composed",
+    "prompt": "Renomeie a variável e corrija o algoritmo de consenso.",
+    "tier": "advanced",
+    "rationale": "A ação mecânica não reduz a corretude distribuída."
+  },
+  {
+    "id": "task-014",
+    "split": "development",
+    "language": "en",
+    "category": "composed",
+    "prompt": "Fix the spelling and repair the pagination calculation.",
+    "tier": "balanced",
+    "rationale": "Inclui correção funcional comum."
+  },
+  {
+    "id": "task-015",
+    "split": "development",
+    "language": "pt",
+    "category": "composed",
+    "prompt": "Traduza o comentário e implemente autenticação.",
+    "tier": "advanced",
+    "rationale": "Inclui implementação sensível."
+  },
+  {
+    "id": "task-016",
+    "split": "development",
+    "language": "en",
+    "category": "composed",
+    "prompt": "Rename the argument and format this short file.",
+    "tier": "economy",
+    "rationale": "Duas operações mecânicas delimitadas."
+  },
+  {
+    "id": "task-017",
+    "split": "development",
+    "language": "pt",
+    "category": "negative",
+    "prompt": "Traduza o comentário sem alterar autenticação ou pagamentos.",
+    "tier": "economy",
+    "rationale": "Riscos excluídos explicitamente do trabalho."
+  },
+  {
+    "id": "task-018",
+    "split": "development",
+    "language": "en",
+    "category": "negative",
+    "prompt": "Do not implement OAuth; fix the spelling in this label.",
+    "tier": "economy",
+    "rationale": "A implementação sensível foi excluída."
+  },
+  {
+    "id": "task-019",
+    "split": "development",
+    "language": "pt",
+    "category": "negative",
+    "prompt": "Não altere o banco; ajuste a cor do botão.",
+    "tier": "balanced",
+    "rationale": "Mudança usual de UI; operação de dados excluída."
+  },
+  {
+    "id": "task-020",
+    "split": "development",
+    "language": "en",
+    "category": "negative",
+    "prompt": "Do not change payments; investigate the deadlock.",
+    "tier": "advanced",
+    "rationale": "A exclusão não remove o deadlock solicitado."
+  },
+  {
+    "id": "task-021",
+    "split": "development",
+    "language": "pt",
+    "category": "reference",
+    "prompt": "Renomeie a variável `authenticationHandler` para `handler`.",
+    "tier": "economy",
+    "rationale": "O identificador é referência, não implementação de acesso."
+  },
+  {
+    "id": "task-022",
+    "split": "development",
+    "language": "en",
+    "category": "reference",
+    "prompt": "Translate docs/payment-architecture.md into Spanish.",
+    "tier": "economy",
+    "rationale": "Nome de arquivo não define complexidade da operação."
+  },
+  {
+    "id": "task-023",
+    "split": "development",
+    "language": "pt",
+    "category": "reference",
+    "prompt": "Corrija a ortografia em oauth.md.",
+    "tier": "economy",
+    "rationale": "Somente correção textual no arquivo."
+  },
+  {
+    "id": "task-024",
+    "split": "development",
+    "language": "en",
+    "category": "reference",
+    "prompt": "Implement the flow specified in docs/login.md.",
+    "tier": "balanced",
+    "rationale": "Referência sem conteúdo exige fallback conservador e override."
+  },
+  {
+    "id": "task-025",
+    "split": "development",
+    "language": "pt",
+    "category": "quoted",
+    "prompt": "Traduza a frase \"implemente autenticação e pagamentos\" para inglês.",
+    "tier": "economy",
+    "rationale": "O conteúdo citado é objeto da tradução."
+  },
+  {
+    "id": "task-026",
+    "split": "development",
+    "language": "en",
+    "category": "quoted",
+    "prompt": "Summarize this sentence: \"Design a distributed system architecture\".",
+    "tier": "economy",
+    "rationale": "Resumo de uma frase citada."
+  },
+  {
+    "id": "task-027",
+    "split": "development",
+    "language": "pt",
+    "category": "quoted",
+    "prompt": "O log diz \"typo\". Investigue a causa raiz da perda de mensagens.",
+    "tier": "advanced",
+    "rationale": "O texto citado não substitui a ação de investigação."
+  },
+  {
+    "id": "task-028",
+    "split": "development",
+    "language": "en",
+    "category": "quoted",
+    "prompt": "\"Fix typo\"",
+    "tier": "balanced",
+    "rationale": "Citação sem instrução externa é ambígua."
+  },
+  {
+    "id": "task-029",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "simple",
+    "prompt": "Traduza este aviso de duas linhas para espanhol.",
+    "tier": "economy",
+    "rationale": "Tradução delimitada e mecânica."
+  },
+  {
+    "id": "task-030",
+    "split": "evaluation",
+    "language": "en",
+    "category": "simple",
+    "prompt": "Fix the spelling mistake in this menu caption.",
+    "tier": "economy",
+    "rationale": "Correção textual delimitada."
+  },
+  {
+    "id": "task-031",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "simple",
+    "prompt": "Renomeie o parâmetro limiteAtual para limite.",
+    "tier": "economy",
+    "rationale": "Renomeação local."
+  },
+  {
+    "id": "task-032",
+    "split": "evaluation",
+    "language": "en",
+    "category": "simple",
+    "prompt": "Explain the command git diff --stat.",
+    "tier": "economy",
+    "rationale": "Explicação de um comando delimitado."
+  },
+  {
+    "id": "task-033",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "common",
+    "prompt": "Corrija a seleção de mês no calendário.",
+    "tier": "balanced",
+    "rationale": "Correção funcional usual."
+  },
+  {
+    "id": "task-034",
+    "split": "evaluation",
+    "language": "en",
+    "category": "common",
+    "prompt": "Add a loading indicator to the catalog view.",
+    "tier": "balanced",
+    "rationale": "Feature de UI delimitada."
+  },
+  {
+    "id": "task-035",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "common",
+    "prompt": "Ajude a melhorar isso.",
+    "tier": "balanced",
+    "rationale": "Pedido ambíguo exige fallback."
+  },
+  {
+    "id": "task-036",
+    "split": "evaluation",
+    "language": "en",
+    "category": "common",
+    "prompt": "Refactor the date parser into two functions.",
+    "tier": "balanced",
+    "rationale": "Refatoração local."
+  },
+  {
+    "id": "task-037",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "complex",
+    "prompt": "Determine a causa raiz das falhas intermitentes na fila.",
+    "tier": "advanced",
+    "rationale": "Investigação de falha não determinística."
+  },
+  {
+    "id": "task-038",
+    "split": "evaluation",
+    "language": "en",
+    "category": "complex",
+    "prompt": "Plan a database migration preserving all invoices.",
+    "tier": "advanced",
+    "rationale": "Integridade de dados financeiros."
+  },
+  {
+    "id": "task-039",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "complex",
+    "prompt": "Implemente autorização por escopo para os tokens.",
+    "tier": "advanced",
+    "rationale": "Controle de acesso sensível."
+  },
+  {
+    "id": "task-040",
+    "split": "evaluation",
+    "language": "en",
+    "category": "complex",
+    "prompt": "Repair the consensus protocol under network partitions.",
+    "tier": "advanced",
+    "rationale": "Corretude distribuída sob falha."
+  },
+  {
+    "id": "task-041",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "composed",
+    "prompt": "Formate o arquivo e corrija a soma do carrinho.",
+    "tier": "balanced",
+    "rationale": "Inclui mudança funcional."
+  },
+  {
+    "id": "task-042",
+    "split": "evaluation",
+    "language": "en",
+    "category": "composed",
+    "prompt": "Rename the constant then implement payment retries.",
+    "tier": "advanced",
+    "rationale": "Inclui operações financeiras."
+  },
+  {
+    "id": "task-043",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "composed",
+    "prompt": "Corrija o typo e formate este JSON curto.",
+    "tier": "economy",
+    "rationale": "Somente operações mecânicas."
+  },
+  {
+    "id": "task-044",
+    "split": "evaluation",
+    "language": "en",
+    "category": "composed",
+    "prompt": "Translate the comment while repairing the leader election algorithm.",
+    "tier": "advanced",
+    "rationale": "Inclui corretude de coordenação distribuída."
+  },
+  {
+    "id": "task-045",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "negative",
+    "prompt": "Não implemente pagamentos. Renomeie a variável totalAtual.",
+    "tier": "economy",
+    "rationale": "Implementação financeira explicitamente excluída."
+  },
+  {
+    "id": "task-046",
+    "split": "evaluation",
+    "language": "en",
+    "category": "negative",
+    "prompt": "Translate this notice without touching authorization.",
+    "tier": "economy",
+    "rationale": "Mudança sensível excluída."
+  },
+  {
+    "id": "task-047",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "negative",
+    "prompt": "Sem alterar OAuth, inclua um indicador de carregamento.",
+    "tier": "balanced",
+    "rationale": "Só feature usual de UI."
+  },
+  {
+    "id": "task-048",
+    "split": "evaluation",
+    "language": "en",
+    "category": "negative",
+    "prompt": "Do not rename anything; diagnose the intermittent failure.",
+    "tier": "advanced",
+    "rationale": "Investigação complexa permanece solicitada."
+  },
+  {
+    "id": "task-049",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "reference",
+    "prompt": "Traduza security/payment.ts para português.",
+    "tier": "economy",
+    "rationale": "Operação textual; caminho não é ação."
+  },
+  {
+    "id": "task-050",
+    "split": "evaluation",
+    "language": "en",
+    "category": "reference",
+    "prompt": "Rename `paymentProcessor` to `processor`.",
+    "tier": "economy",
+    "rationale": "Identificador como referência mecânica."
+  },
+  {
+    "id": "task-051",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "reference",
+    "prompt": "Corrija o filtro conforme docs/search.md.",
+    "tier": "balanced",
+    "rationale": "Correção usual referenciada."
+  },
+  {
+    "id": "task-052",
+    "split": "evaluation",
+    "language": "en",
+    "category": "reference",
+    "prompt": "Implement the requirements in spec.md.",
+    "tier": "balanced",
+    "rationale": "Conteúdo ausente não justifica economia."
+  },
+  {
+    "id": "task-053",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "quoted",
+    "prompt": "Resuma a frase “auditoria de segurança em sistemas distribuídos”.",
+    "tier": "economy",
+    "rationale": "Resumo curto de conteúdo citado."
+  },
+  {
+    "id": "task-054",
+    "split": "evaluation",
+    "language": "en",
+    "category": "quoted",
+    "prompt": "Translate 'Implement OAuth and payment processing' into German.",
+    "tier": "economy",
+    "rationale": "A citação não é trabalho solicitado."
+  },
+  {
+    "id": "task-055",
+    "split": "evaluation",
+    "language": "pt",
+    "category": "quoted",
+    "prompt": "A mensagem contém \"renomeie\". Resolva a condição de corrida.",
+    "tier": "advanced",
+    "rationale": "Ação real de concorrência domina a citação."
+  },
+  {
+    "id": "task-056",
+    "split": "evaluation",
+    "language": "en",
+    "category": "quoted",
+    "prompt": "The issue title is \"format JSON\"; add pagination to the results.",
+    "tier": "balanced",
+    "rationale": "Título citado não torna a feature mecânica."
+  }
+]

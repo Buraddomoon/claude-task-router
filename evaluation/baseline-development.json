@@ -1,0 +1,193 @@
+{
+  "split": "development",
+  "corpus_sha256": "4f925b78f247678e48a2ab582a55bbf04eee1fc7f7d7068e49984375fc97c1e9",
+  "policy": "local-rules-v1",
+  "python": "3.14.3",
+  "platform": "Linux",
+  "cases": 28,
+  "exact": 17,
+  "undersized": 4,
+  "oversized": 7,
+  "accuracy": 0.6071,
+  "undersizing_rate": 0.1429,
+  "oversizing_rate": 0.25,
+  "confusion": {
+    "economy": {
+      "economy": 5,
+      "balanced": 0,
+      "advanced": 7
+    },
+    "balanced": {
+      "economy": 2,
+      "balanced": 6,
+      "advanced": 0
+    },
+    "advanced": {
+      "economy": 1,
+      "balanced": 1,
+      "advanced": 6
+    }
+  },
+  "categories": {
+    "simple": {
+      "total": 4,
+      "correct": 4
+    },
+    "common": {
+      "total": 4,
+      "correct": 4
+    },
+    "complex": {
+      "total": 4,
+      "correct": 3
+    },
+    "composed": {
+      "total": 4,
+      "correct": 2
+    },
+    "negative": {
+      "total": 4,
+      "correct": 2
+    },
+    "reference": {
+      "total": 4,
+      "correct": 1
+    },
+    "quoted": {
+      "total": 4,
+      "correct": 1
+    }
+  },
+  "mismatches": [
+    {
+      "id": "task-009",
+      "prompt": "Projete replicação com consenso e tolerância a falhas.",
+      "expected": "advanced",
+      "actual": "balanced",
+      "rationale": "Corretude distribuída e falhas.",
+      "reasons": [
+        "uncertain_use_balanced"
+      ]
+    },
+    {
+      "id": "task-013",
+      "prompt": "Renomeie a variável e corrija o algoritmo de consenso.",
+      "expected": "advanced",
+      "actual": "economy",
+      "rationale": "A ação mecânica não reduz a corretude distribuída.",
+      "reasons": [
+        "bounded_simple_intent"
+      ]
+    },
+    {
+      "id": "task-014",
+      "prompt": "Fix the spelling and repair the pagination calculation.",
+      "expected": "balanced",
+      "actual": "economy",
+      "rationale": "Inclui correção funcional comum.",
+      "reasons": [
+        "bounded_simple_intent"
+      ]
+    },
+    {
+      "id": "task-017",
+      "prompt": "Traduza o comentário sem alterar autenticação ou pagamentos.",
+      "expected": "economy",
+      "actual": "advanced",
+      "rationale": "Riscos excluídos explicitamente do trabalho.",
+      "reasons": [
+        "high_risk"
+      ]
+    },
+    {
+      "id": "task-018",
+      "prompt": "Do not implement OAuth; fix the spelling in this label.",
+      "expected": "economy",
+      "actual": "advanced",
+      "rationale": "A implementação sensível foi excluída.",
+      "reasons": [
+        "high_risk",
+        "implementation"
+      ]
+    },
+    {
+      "id": "task-021",
+      "prompt": "Renomeie a variável `authenticationHandler` para `handler`.",
+      "expected": "economy",
+      "actual": "advanced",
+      "rationale": "O identificador é referência, não implementação de acesso.",
+      "reasons": [
+        "high_risk"
+      ]
+    },
+    {
+      "id": "task-022",
+      "prompt": "Translate docs/payment-architecture.md into Spanish.",
+      "expected": "economy",
+      "actual": "advanced",
+      "rationale": "Nome de arquivo não define complexidade da operação.",
+      "reasons": [
+        "high_risk",
+        "complex_reasoning"
+      ]
+    },
+    {
+      "id": "task-023",
+      "prompt": "Corrija a ortografia em oauth.md.",
+      "expected": "economy",
+      "actual": "advanced",
+      "rationale": "Somente correção textual no arquivo.",
+      "reasons": [
+        "high_risk"
+      ]
+    },
+    {
+      "id": "task-025",
+      "prompt": "Traduza a frase \"implemente autenticação e pagamentos\" para inglês.",
+      "expected": "economy",
+      "actual": "advanced",
+      "rationale": "O conteúdo citado é objeto da tradução.",
+      "reasons": [
+        "high_risk",
+        "implementation"
+      ]
+    },
+    {
+      "id": "task-026",
+      "prompt": "Summarize this sentence: \"Design a distributed system architecture\".",
+      "expected": "economy",
+      "actual": "advanced",
+      "rationale": "Resumo de uma frase citada.",
+      "reasons": [
+        "complex_reasoning"
+      ]
+    },
+    {
+      "id": "task-028",
+      "prompt": "\"Fix typo\"",
+      "expected": "balanced",
+      "actual": "economy",
+      "rationale": "Citação sem instrução externa é ambígua.",
+      "reasons": [
+        "bounded_simple_intent"
+      ]
+    }
+  ],
+  "classifier_p50_ms": 0.0138,
+  "classifier_p95_ms": 0.0158,
+  "maximum_input_bytes": 262144,
+  "maximum_scanned_chars": 65536,
+  "maximum_p95_ms": 9.225,
+  "checks": {
+    "accuracy": false,
+    "undersizing": false,
+    "oversizing": false,
+    "advanced_never_economy": false,
+    "typical_latency": true,
+    "maximum_latency": true
+  },
+  "passed": false,
+  "router_inference_calls": 0,
+  "router_injected_context_tokens": 0,
+  "limitation": "Synthetic tier labels; not real answer quality, billing or token savings."
+}
