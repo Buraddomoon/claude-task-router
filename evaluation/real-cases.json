@@ -1,0 +1,65 @@
+[
+  {
+    "id": "spelling",
+    "category": "simple",
+    "prompt": "Corrija o typo na frase \"Teh quick brown fox.\" Retorne somente JSON com a chave text contendo a frase corrigida.",
+    "tier": "economy",
+    "kind": "json",
+    "expected": {
+      "text": "The quick brown fox."
+    }
+  },
+  {
+    "id": "rename",
+    "category": "simple",
+    "prompt": "Renomeie a variável userNmae para userName no trecho \"userNmae = 3\\nprint(userNmae)\". Retorne somente JSON com a chave code contendo o trecho resultante, sem outras alterações.",
+    "tier": "economy",
+    "kind": "rename",
+    "expected": "userName = 3\nprint(userName)"
+  },
+  {
+    "id": "json-format",
+    "category": "simple",
+    "prompt": "Formate este JSON, sem alterar valores: {\"b\":[2,1],\"a\":true}. Retorne somente o objeto JSON, sem Markdown.",
+    "tier": "economy",
+    "kind": "json",
+    "expected": {
+      "b": [
+        2,
+        1
+      ],
+      "a": true
+    }
+  },
+  {
+    "id": "translation",
+    "category": "simple",
+    "prompt": "Traduza o rótulo \"Save changes\" para português brasileiro. Retorne somente JSON com a chave text.",
+    "tier": "economy",
+    "kind": "translation",
+    "expected": [
+      "Salvar alterações",
+      "Salvar mudanças"
+    ]
+  },
+  {
+    "id": "pagination",
+    "category": "common",
+    "prompt": "Implemente uma função Python pages(total, size) que retorne quantas páginas são necessárias para total itens com size itens por página. total é inteiro não negativo, size é inteiro positivo, e total=0 deve retornar 0. Use somente aritmética inteira e return, sem imports ou chamadas de função. Retorne somente JSON {\"code\":\"código da função\"}.",
+    "tier": "balanced",
+    "kind": "python"
+  },
+  {
+    "id": "concurrency",
+    "category": "complex",
+    "prompt": "Analise esta condição de corrida: contador começa em 0. Duas threads fazem uma vez cada: leem contador em uma variável local e depois escrevem local+1. Leituras e escritas individuais são atômicas e há consistência sequencial; não existe lock nem incremento atômico. Determine todos os valores finais possíveis após ambas terminarem. Retorne somente JSON {\"possible_final_values\":[valores em ordem crescente]}.",
+    "tier": "advanced",
+    "kind": "json",
+    "expected": {
+      "possible_final_values": [
+        1,
+        2
+      ]
+    }
+  }
+]
