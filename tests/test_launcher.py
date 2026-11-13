@@ -357,6 +357,21 @@ class LauncherTests(unittest.TestCase):
         self.assertFalse(self.state_dir.exists())
         self.assertFalse(self.log.exists())
 
+    def test_diagnostics_is_allowlisted_and_never_exports_private_fields(self):
+        self.assertEqual(self.call("new", "Fix typo SECRET-DIAGNOSTICS").returncode, 0)
+        output = self.root / "diagnostic.json"
+        result = self.call("diagnostics", "--output", str(output))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        raw = output.read_text()
+        payload = json.loads(raw)
+        self.assertTrue(payload["integrity_ok"])
+        self.assertEqual(payload["task_count"], 1)
+        for private in (str(self.project), self.task()["id"], "SECRET-DIAGNOSTICS", "config", "transcript", "claude-haiku"):
+            self.assertNotIn(private, raw)
+        self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(self.call("diagnostics", "--output", str(output)).returncode, 2)
+        self.assertEqual(len(self.logs()), 1)
+
     def test_running_task_rejects_concurrent_resume_and_model_edit(self):
         ready = self.root / "ready"
         command = [sys.executable, "-m", "claude_task_router", "--state-dir",

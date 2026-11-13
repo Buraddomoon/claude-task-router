@@ -2,7 +2,9 @@
 
 import argparse
 import json
+import os
 from pathlib import Path
+import platform
 import sqlite3
 import subprocess
 import sys
@@ -73,6 +75,8 @@ def parser():
     inspection = models.add_mutually_exclusive_group()
     inspection.add_argument("--check", metavar="MODELO", help="Validar nome/restrição pelo comando nativo, sem turno de IA")
     inspection.add_argument("--probe", metavar="MODELO", help="Teste real curto com consumo explícito de IA")
+    diagnostics = subs.add_parser("diagnostics", help="Exportar somente estatísticas locais, sem dados privados")
+    diagnostics.add_argument("--output", type=Path, help="Criar arquivo novo 0600; padrão stdout")
     return p
 
 
@@ -114,7 +118,7 @@ def main(argv=None) -> int:
         argv, extra = argv[:separator], argv[separator + 1:]
     # A bare ctr opens the most recent project task. Explicit commands retain
     # their existing grammar; a single quoted prompt is shorthand for run.
-    commands = {"new", "classify", "run", "resume", "recover", "model", "models", "status", "show", "doctor"}
+    commands = {"new", "classify", "run", "resume", "recover", "model", "models", "status", "show", "doctor", "diagnostics"}
     index = 0
     while index < len(argv) and argv[index].split("=", 1)[0] in {"--state-dir", "--config", "--claude-bin"}:
         index += 1 if "=" in argv[index] else 2
@@ -155,6 +159,20 @@ def main(argv=None) -> int:
             result, code = inspect_model(args.claude_bin, args.check or args.probe, probe=bool(args.probe))
             dump(result)
             return code
+        if args.command == "diagnostics":
+            root = (args.state_dir or default_state_dir()).expanduser()
+            result = dict(router_version=__version__, python=platform.python_version(),
+                          platform=platform.system(), state_present=(root / "tasks.sqlite3").exists())
+            if result["state_present"]:
+                result.update(Store(args.state_dir).diagnostics())
+            if args.output:
+                from .privacy import private_file
+                fd = private_file(args.output, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                with os.fdopen(fd, "w") as stream:
+                    stream.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+            else:
+                dump(result)
+            return 0
         if args.command in {"new", "classify"}:
             config = load_config(args.config)
             prompt = read_prompt(args, required=True)

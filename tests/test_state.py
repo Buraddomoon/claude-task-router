@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -31,6 +32,45 @@ class StateTests(unittest.TestCase):
         self.assertEqual(self.store.path.stat().st_mode & 0o777, 0o600)
         self.assertEqual(self.store.root.stat().st_mode & 0o777, 0o700)
         self.assertEqual(task["config"], Config().snapshot())
+
+    def test_existing_private_permissions_are_repaired_and_links_are_refused(self):
+        self.store.root.chmod(0o755)
+        self.store.path.chmod(0o644)
+        Store(self.store.root)
+        self.assertEqual(self.store.root.stat().st_mode & 0o777, 0o700)
+        self.assertEqual(self.store.path.stat().st_mode & 0o777, 0o600)
+        target = self.cwd / "foreign"
+        target.write_text("FOREIGN-CONTENT")
+        target.chmod(0o644)
+        for kind in ("symlink", "hardlink", "fifo"):
+            root = self.cwd / kind
+            root.mkdir(mode=0o700)
+            db = root / "tasks.sqlite3"
+            if kind == "symlink":
+                db.symlink_to(target)
+            elif kind == "hardlink":
+                os.link(target, db)
+            else:
+                os.mkfifo(db)
+            with self.subTest(kind=kind), self.assertRaises((OSError, ValueError)):
+                Store(root)
+            self.assertEqual(target.read_text(), "FOREIGN-CONTENT")
+            self.assertEqual(target.stat().st_mode & 0o777, 0o644)
+        alias = self.cwd / "state-alias"
+        alias.symlink_to(self.store.root)
+        with self.assertRaises(OSError):
+            Store(alias)
+
+    def test_lock_symlink_does_not_touch_an_unrelated_file(self):
+        directory = self.store.root / "locks"
+        directory.mkdir()
+        target = self.cwd / "unrelated"
+        target.write_text("unchanged")
+        (directory / (self.task["id"] + ".lock")).symlink_to(target)
+        with self.assertRaises(OSError):
+            with self.store.task_lock(self.task["id"]):
+                self.fail("symlink lock followed")
+        self.assertEqual(target.read_text(), "unchanged")
 
     def test_model_and_observation(self):
         self.store.set_model(self.task["id"], "sonnet")

@@ -48,7 +48,7 @@ class ClassifierTests(unittest.TestCase):
                        {"medium_words": 1500}, {"long_words": -1}):
             with self.assertRaises(ValueError):
                 Config(**kwargs)
-        for model in ("default", "opusplan", "opusplan[1m]", "--help", "hi there", ""):
+        for model in ("default", "opusplan", "opusplan[1m]", "--help", "hi there", "", "haiku\u202e", "sk-ant-api03-TEST"):
             with self.assertRaises(ValueError):
                 validate_model(model)
 

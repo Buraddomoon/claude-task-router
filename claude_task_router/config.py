@@ -3,6 +3,7 @@
 from dataclasses import asdict, dataclass, field
 import json
 import os
+import re
 from pathlib import Path
 
 TIERS = ("economy", "balanced", "advanced")
@@ -10,9 +11,9 @@ MAX_PROMPT_BYTES = 256 * 1024
 
 
 def validate_model(model: str) -> str:
-    if (not isinstance(model, str) or not model or len(model) > 512
-            or model.startswith("-") or any(c.isspace() or ord(c) < 32 for c in model)):
-        raise ValueError("Modelo deve ser um alias ou ID sem espaços, com até 512 caracteres.")
+    if (not isinstance(model, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/@+\[\]-]{0,511}", model)
+            or model.lower().startswith(("sk-ant-", "sk-proj-"))):
+        raise ValueError("Modelo deve ser alias ou ID ASCII estável, com até 512 caracteres; não informe credenciais.")
     if model.lower().split("[")[0] in {"default", "opusplan", "best"}:
         raise ValueError("Use um modelo estável: haiku, sonnet, opus ou ID explícito.")
     return model

@@ -12,6 +12,7 @@ import sqlite3
 import uuid
 
 from .config import validate_model
+from .privacy import private_directory, private_file
 
 
 def now():
@@ -34,11 +35,10 @@ def launch_model(task: dict) -> str:
 
 class Store:
     def __init__(self, root: Path | None = None):
-        self.root = (root or default_state_dir()).expanduser().resolve()
-        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        self.root = private_directory(root or default_state_dir())
         self.path = self.root / "tasks.sqlite3"
         # Create privately before SQLite ever writes task metadata.
-        fd = os.open(self.path, os.O_CREAT | os.O_RDWR, 0o600)
+        fd = private_file(self.path)
         os.close(fd)
         with self.connect() as db:
             # Serialize version detection and DDL in the same transaction. executescript
@@ -178,6 +178,17 @@ class Store:
             rows = db.execute("SELECT at,kind,model,source,execution_id FROM events WHERE task_id=? ORDER BY id",
                               (task_id,)).fetchall()
         return [dict(row) for row in rows]
+
+    def diagnostics(self):
+        # Select aggregate fields explicitly; never redact a full task/config.
+        with self.connect() as db:
+            return dict(schema=db.execute("PRAGMA user_version").fetchone()[0],
+                        integrity_ok=db.execute("PRAGMA quick_check").fetchone()[0] == "ok",
+                        task_count=db.execute("SELECT COUNT(*) FROM tasks").fetchone()[0],
+                        unconfirmed_count=db.execute("SELECT COUNT(*) FROM tasks WHERE observed_at IS NULL").fetchone()[0],
+                        divergence_count=db.execute("SELECT COUNT(*) FROM events WHERE kind='model_diverged'").fetchone()[0],
+                        exit_status_counts={str(row[0]): row[1] for row in db.execute(
+                            "SELECT last_exit_code,COUNT(*) FROM tasks GROUP BY last_exit_code")})
 
     def set_model(self, task_id: str, model: str, source="manual"):
         model = validate_model(model)
@@ -332,9 +343,8 @@ class Store:
         # Full UUID validation before using IDs as filenames.
         if str(uuid.UUID(task_id)) != task_id:
             raise ValueError("UUID inválido.")
-        directory = self.root / "locks"
-        directory.mkdir(exist_ok=True, mode=0o700)
-        fd = os.open(directory / f"{task_id}.lock", os.O_CREAT | os.O_RDWR, 0o600)
+        directory = private_directory(self.root / "locks")
+        fd = private_file(directory / f"{task_id}.lock")
         try:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
