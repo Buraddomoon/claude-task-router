@@ -5,6 +5,7 @@ import sqlite3
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from claude_task_router.cli import main
 from claude_task_router.classifier import classify
@@ -69,3 +70,9 @@ class MaintenanceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 restore_state(path, destination)
             self.assertFalse(destination.exists())
+
+    def test_unmanaged_python_does_not_remove_another_installation(self):
+        from claude_task_router.uninstall import remove_installation
+        with patch("claude_task_router.uninstall.sys.prefix", str(self.root / "unmanaged")):
+            with self.assertRaisesRegex(ValueError, "não é gerenciado"):
+                remove_installation()

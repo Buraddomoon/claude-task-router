@@ -129,7 +129,9 @@ def main():
     try:
         if args.uninstall:
             from claude_task_router.uninstall import remove_installation
-            print(remove_installation(state_dir=args.state_dir))
+            data = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
+            active = os.environ.get("CTR_VENV_DIR", data / "claude-task-router/venv")
+            print(remove_installation(active=active, state_dir=args.state_dir))
         else:
             install(args.rollback)
     except (OSError, ValueError, subprocess.SubprocessError) as exc:

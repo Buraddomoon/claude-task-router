@@ -14,8 +14,10 @@ def remove_installation(active=None, bin_dir=None, state_dir=None):
     from .state import Store, default_state_dir
     if active is None:
         marker = Path(sys.prefix) / ".ctr-install"
-        data = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
-        active = marker.read_text() if marker.is_file() else os.environ.get("CTR_VENV_DIR", data / "claude-task-router/venv")
+        if not marker.is_file():
+            raise ValueError("Este ambiente não é gerenciado pelo instalador. Use o pip deste ambiente "
+                             "ou informe --venv-dir explicitamente; outra instalação não será removida.")
+        active = marker.read_text()
     active = Path(os.path.abspath(Path(active).expanduser()))
     bin_dir = Path(os.path.abspath(Path(bin_dir or os.environ.get("CTR_BIN_DIR", Path.home() / ".local/bin")).expanduser()))
     command = bin_dir / "ctr"
