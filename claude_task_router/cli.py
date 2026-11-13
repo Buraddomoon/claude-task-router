@@ -8,10 +8,11 @@ import subprocess
 import sys
 
 from . import __version__
+from .boundary import choose
 from .classifier import Decision, classify, validate_prompt
 from .config import MAX_PROMPT_BYTES, TIERS, load_config, validate_model
 from .launcher import doctor, executable, run, validate_extra
-from .state import Store, launch_model
+from .state import Store, default_state_dir, launch_model
 
 
 def parser():
@@ -26,18 +27,24 @@ def parser():
     p.add_argument("--config", type=Path, default=None, help="JSON explícito, usado somente em new/classify")
     p.add_argument("--claude-bin", default="claude")
     subs = p.add_subparsers(dest="command", required=True)
-    for name in ("new", "classify"):
-        sub = subs.add_parser(name, help="Nova tarefa" if name == "new" else "Explicar decisão sem executar Claude")
+    for name in ("new", "classify", "run"):
+        sub = subs.add_parser(name, help={"new": "Nova tarefa", "classify": "Explicar decisão sem executar Claude",
+                                        "run": "Detectar tarefa nova ou continuação localmente"}[name])
         sub.add_argument("prompt", nargs="?", help="Texto inicial; sem texto, lê uma linha no terminal")
         sub.add_argument("--prompt-file", type=Path, help="Arquivo UTF-8; - lê stdin")
         sub.add_argument("--cwd", type=Path, default=Path.cwd())
         manual = sub.add_mutually_exclusive_group()
         manual.add_argument("--model", help="Ignora classificação e fixa este modelo")
         manual.add_argument("--tier", choices=TIERS)
-        if name == "new":
+        if name in {"new", "run"}:
             sub.add_argument("--dry-run", action="store_true", help="Planejar sem persistir ou executar")
         else:
             sub.add_argument("--json", action="store_true")
+        if name == "run":
+            boundary = sub.add_mutually_exclusive_group()
+            boundary.add_argument("--new", dest="mode", action="store_const", const="new")
+            boundary.add_argument("--continue", dest="mode", action="store_const", const="continue")
+            sub.set_defaults(mode="auto")
     resume = subs.add_parser("resume", help="Retomar tarefa sem reclassificar")
     resume.add_argument("task", nargs="?", default="latest")
     resume.add_argument("prompt", nargs="?")
@@ -98,11 +105,39 @@ def main(argv=None) -> int:
     if "--" in argv:
         separator = argv.index("--")
         argv, extra = argv[:separator], argv[separator + 1:]
+    # A bare ctr opens the most recent project task. Explicit commands retain
+    # their existing grammar; a single quoted prompt is shorthand for run.
+    commands = {"new", "classify", "run", "resume", "recover", "model", "status", "show", "doctor"}
+    index = 0
+    while index < len(argv) and argv[index].split("=", 1)[0] in {"--state-dir", "--config", "--claude-bin"}:
+        index += 1 if "=" in argv[index] else 2
+    if index == len(argv) or (index < len(argv) and not argv[index].startswith("-")
+                             and argv[index] not in commands and any(c.isspace() for c in argv[index])):
+        argv.insert(index, "run")
     args = parser().parse_args(argv)
     try:
         validate_extra(extra)
-        if extra and args.command not in {"new", "resume", "recover"}:
+        if extra and args.command not in {"new", "resume", "recover", "run"}:
             raise ValueError("Argumentos Claude são aceitos somente em new/resume/recover.")
+        if args.command == "run":
+            prompt = read_prompt(args, required=False)
+            cwd = args.cwd.expanduser().resolve()
+            if not cwd.is_dir():
+                raise ValueError(f"Diretório não existe: {cwd}")
+            root = args.state_dir or default_state_dir()
+            latest = None
+            if (root.expanduser() / "tasks.sqlite3").exists():
+                current_store = Store(args.state_dir)
+                candidates = current_store.list_tasks(cwd, limit=1)
+                latest = current_store.get(candidates[0]["id"]) if candidates else None
+            action, reason = choose(prompt, latest, args.mode)
+            print(f"[ctr] {action}: {reason}; use --new/--continue para escolher explicitamente.", file=sys.stderr)
+            if action == "resume":
+                if args.tier:
+                    raise ValueError("--tier só se aplica a tarefa nova; use --new ou --model.")
+                args.command, args.task, args.prompt, args.prompt_file = "resume", latest["id"], prompt, None
+            else:
+                args.command, args.prompt, args.prompt_file = "new", prompt, None
         if args.command == "doctor":
             result, code = doctor(args.claude_bin)
             dump(result)

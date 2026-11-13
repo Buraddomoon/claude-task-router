@@ -104,6 +104,34 @@ class LauncherTests(unittest.TestCase):
             code = main(["new", "any task", "--model", "opus", "--dry-run"])
             self.assertEqual(code, 0)
 
+    def test_auto_entry_reuses_only_clear_project_continuations(self):
+        self.assertEqual(self.call("run", "Fix typo").returncode, 0)
+        task = self.task()
+        with patch("claude_task_router.cli.classify", side_effect=AssertionError("classification")), \
+             patch("claude_task_router.cli.load_config", side_effect=AssertionError("config")), \
+             redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            code = main(["--state-dir", str(self.state_dir), "--claude-bin", str(FAKE),
+                         "--config", "missing.json", "run", "Continue e implemente autenticação",
+                         "--cwd", str(self.project)])
+        self.assertEqual(code, 0)
+        self.assertEqual(self.task()["id"], task["id"])
+        self.assertEqual(self.task()["model"], "haiku")
+        self.assertEqual(self.call("run", "Implement OAuth").returncode, 0)
+        self.assertNotEqual(self.task()["id"], task["id"])
+        self.assertEqual(self.task()["model"], "opus")
+
+    def test_bare_entry_shorthand_overrides_and_dry_run(self):
+        planned = self.call("run", "Fix typo", "--dry-run")
+        self.assertEqual(planned.returncode, 0, planned.stderr)
+        self.assertFalse(self.state_dir.exists())
+        self.assertEqual(self.call("Fix typo").returncode, 0)
+        before = self.task()
+        self.assertEqual(self.call().returncode, 0)
+        self.assertEqual(self.task()["id"], before["id"])
+        self.assertEqual(self.call("run", "Continue", "--new").returncode, 0)
+        self.assertNotEqual(self.task()["id"], before["id"])
+        self.assertEqual(self.call("run", "--continue", "--dry-run").returncode, 0)
+
     def test_slash_model_change_persists(self):
         env = dict(self.env, FAKE_MANUAL_MODEL="claude-opus-manual")
         self.assertEqual(self.call("new", "Fix typo", env=env).returncode, 0)

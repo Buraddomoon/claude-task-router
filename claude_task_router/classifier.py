@@ -50,7 +50,11 @@ SIMPLE_ACTION = re.compile(
 OTHER_ACTION = re.compile(
     r"\b(?:implement\w*|desenvolv\w*|build|crie|criar|create|adicion\w*|add|"
     r"corrij\w*|fix|repair|resolv\w*|solve|investig\w*|diagnos\w*|projete|design|"
-    r"refator\w*|refactor\w*|redesign|reestrutur\w*|optimiz\w*|otimiz\w*)\b")
+    r"refator\w*|refactor\w*|redesign|reestrutur\w*|optimiz\w*|otimiz\w*|"
+    r"elimin\w*|remov\w*|delet\w*|exclu\w*|apagu\w*|alter\w*|chang\w*|"
+    r"execut\w*|run|deploy\w*|encrypt\w*|criptograf\w*)\b")
+NAMED_IDENTIFIER = re.compile(
+    r"\b(variavel|variable|parametro|parameter|argumento|argument|constante|constant)\s+\w+\b")
 
 
 def requested_work(text: str) -> tuple[str, bool]:
@@ -63,7 +67,11 @@ def requested_work(text: str) -> tuple[str, bool]:
         match = SIMPLE_ACTION.match(clause)
         if not match or OTHER_ACTION.search(clause[match.end():]):
             simple = False
-    return " ; ".join(clauses), simple
+    # A named identifier is a reference, but a simple action must never hide
+    # risk words in the rest of the requested work.
+    risk_text = [NAMED_IDENTIFIER.sub(r"\1 identifier", clause)
+                 if SIMPLE_ACTION.match(clause) else clause for clause in clauses]
+    return " ; ".join(risk_text), simple
 
 
 @dataclass(frozen=True)
@@ -74,7 +82,7 @@ class Decision:
     reasons: tuple[str, ...]
     scanned_chars: int
     total_chars: int
-    policy: str = "local-rules-v2"
+    policy: str = "local-rules-v3"
 
     def to_dict(self):
         return asdict(self)
@@ -99,7 +107,7 @@ def classify(prompt: str, config: Config | None = None) -> Decision:
     reasons = []
     score = 0
     for reason, weight, pattern in RULES:
-        if not simple and pattern.search(work):
+        if pattern.search(work):
             reasons.append(reason)
             score += weight
     paths = len(set(PATHS.findall(text)))

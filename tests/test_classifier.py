@@ -86,3 +86,14 @@ class ClassifierTests(unittest.TestCase):
                 decision = classify(prompt)
                 self.assertLessEqual(decision.scanned_chars, 65536)
                 self.assertNotEqual(decision.tier, "economy")
+
+    def test_simple_prefix_cannot_disable_risk_or_conceal_a_second_action(self):
+        for prompt, expected in (
+            ("Corrija o typo para eliminar a vulnerabilidade de autorização", "advanced"),
+            ("Formate o arquivo removendo os registros antigos", "balanced"),
+            ("Fix spelling to deploy the change", "balanced"),
+            ("Rename the variable authenticationHandler", "economy"),
+            ("Corrija typo sobre autorização e implemente OAuth", "advanced"),
+        ):
+            with self.subTest(prompt=prompt):
+                self.assertEqual(classify(prompt).tier, expected)
