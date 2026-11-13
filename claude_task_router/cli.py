@@ -11,7 +11,7 @@ from . import __version__
 from .boundary import choose
 from .classifier import Decision, classify, validate_prompt
 from .config import MAX_PROMPT_BYTES, TIERS, load_config, validate_model
-from .launcher import doctor, executable, run, validate_extra
+from .launcher import doctor, executable, run, validate_extra, validate_timeout
 from .state import Store, default_state_dir, launch_model
 
 
@@ -38,6 +38,7 @@ def parser():
         manual.add_argument("--tier", choices=TIERS)
         if name in {"new", "run"}:
             sub.add_argument("--dry-run", action="store_true", help="Planejar sem persistir ou executar")
+            sub.add_argument("--timeout", type=float, help="Tempo limite do launcher em segundos; exige modo print")
         else:
             sub.add_argument("--json", action="store_true")
         if name == "run":
@@ -51,12 +52,14 @@ def parser():
     resume.add_argument("--prompt-file", type=Path)
     resume.add_argument("--model")
     resume.add_argument("--dry-run", action="store_true")
+    resume.add_argument("--timeout", type=float)
     recover = subs.add_parser("recover", help="Abrir sessão substituta com a escolha salva, sem histórico")
     recover.add_argument("task")
     recover.add_argument("prompt", nargs="?", help="Contexto para a nova sessão; não reenvia a conversa anterior")
     recover.add_argument("--prompt-file", type=Path)
     recover.add_argument("--cwd", type=Path, help="Diretório substituto; padrão: projeto original")
     recover.add_argument("--dry-run", action="store_true")
+    recover.add_argument("--timeout", type=float)
     model = subs.add_parser("model", help="Fixar modelo de uma tarefa inativa")
     model.add_argument("task")
     model.add_argument("model")
@@ -66,6 +69,10 @@ def parser():
     show = subs.add_parser("show", help="Metadados e eventos de uma tarefa")
     show.add_argument("task", nargs="?", default="latest")
     subs.add_parser("doctor", help="Verificar interface instalada sem chamada de IA")
+    models = subs.add_parser("models", help="Consultar modelos pela interface nativa pública")
+    inspection = models.add_mutually_exclusive_group()
+    inspection.add_argument("--check", metavar="MODELO", help="Validar nome/restrição pelo comando nativo, sem turno de IA")
+    inspection.add_argument("--probe", metavar="MODELO", help="Teste real curto com consumo explícito de IA")
     return p
 
 
@@ -107,7 +114,7 @@ def main(argv=None) -> int:
         argv, extra = argv[:separator], argv[separator + 1:]
     # A bare ctr opens the most recent project task. Explicit commands retain
     # their existing grammar; a single quoted prompt is shorthand for run.
-    commands = {"new", "classify", "run", "resume", "recover", "model", "status", "show", "doctor"}
+    commands = {"new", "classify", "run", "resume", "recover", "model", "models", "status", "show", "doctor"}
     index = 0
     while index < len(argv) and argv[index].split("=", 1)[0] in {"--state-dir", "--config", "--claude-bin"}:
         index += 1 if "=" in argv[index] else 2
@@ -117,6 +124,7 @@ def main(argv=None) -> int:
     args = parser().parse_args(argv)
     try:
         validate_extra(extra)
+        validate_timeout(extra, getattr(args, "timeout", None))
         if extra and args.command not in {"new", "resume", "recover", "run"}:
             raise ValueError("Argumentos Claude são aceitos somente em new/resume/recover.")
         if args.command == "run":
@@ -140,6 +148,11 @@ def main(argv=None) -> int:
                 args.command, args.prompt, args.prompt_file = "new", prompt, None
         if args.command == "doctor":
             result, code = doctor(args.claude_bin)
+            dump(result)
+            return code
+        if args.command == "models":
+            from .models import inspect_model
+            result, code = inspect_model(args.claude_bin, args.check or args.probe, probe=bool(args.probe))
             dump(result)
             return code
         if args.command in {"new", "classify"}:
@@ -169,7 +182,7 @@ def main(argv=None) -> int:
             store = Store(args.state_dir)
             task = store.create(cwd, prompt, decision.to_dict(), config.snapshot())
             with store.task_lock(task["id"]):
-                return run(store, task, binary, prompt, extra, resume=False)
+                return run(store, task, binary, prompt, extra, resume=False, timeout=args.timeout)
         store = Store(args.state_dir)
         if args.command == "status":
             tasks = store.list_tasks(Path.cwd(), all_projects=args.all)
@@ -208,7 +221,7 @@ def main(argv=None) -> int:
             print(f"[ctr] recuperação de {task['id']} → {replacement['id']}; "
                   "nova sessão sem histórico anterior, escolha salva preservada.", file=sys.stderr)
             with store.task_lock(replacement["id"]):
-                return run(store, replacement, binary, prompt, extra, resume=False)
+                return run(store, replacement, binary, prompt, extra, resume=False, timeout=args.timeout)
         if args.command == "resume":
             prompt = read_prompt(args, required=False)
             if args.model:
@@ -222,7 +235,7 @@ def main(argv=None) -> int:
                 if args.model:
                     store.set_model(task["id"], args.model, source="resume_override")
                 task = store.get(task["id"])
-                return run(store, task, binary, prompt, extra, resume=True)
+                return run(store, task, binary, prompt, extra, resume=True, timeout=args.timeout)
         raise ValueError("Comando desconhecido.")
     except (ValueError, TypeError, OSError, sqlite3.Error, subprocess.SubprocessError) as exc:
         print(f"ctr: {exc}", file=sys.stderr)

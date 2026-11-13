@@ -17,6 +17,17 @@ if args == ["--version"]:
 if args == ["--help"]:
     print("--model --resume --session-id --settings")
     sys.exit(0)
+if args == ["auth", "status"]:
+    print(json.dumps(dict(loggedIn=not bool(os.environ.get("FAKE_LOGGED_OUT")), authMethod="simulated")))
+    sys.exit(0)
+if "--no-session-persistence" in args:
+    prompt = args[-1]
+    invalid = prompt.startswith("/model invalid")
+    print(json.dumps(dict(type="result", subtype="success", is_error=False,
+        num_turns=0, total_cost_usd=0,
+        result="Model 'invalid' not found" if invalid else
+               "Current model: Sonnet" if prompt == "/model" else "Set model to Haiku")))
+    sys.exit(0)
 
 
 def value(flag):

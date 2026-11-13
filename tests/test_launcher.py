@@ -321,6 +321,42 @@ class LauncherTests(unittest.TestCase):
         self.assertTrue(json.loads(result.stdout)["ok"])
         self.assertFalse(self.log.exists())
 
+    def test_model_commands_reject_native_success_with_invalid_model_without_inference(self):
+        for args, expected in ((("models",), 0), (("models", "--check", "haiku"), 0),
+                               (("models", "--check", "invalid-router-model"), 1)):
+            result = self.call(*args)
+            self.assertEqual(result.returncode, expected, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["native_turns"], 0)
+            self.assertEqual(payload["cli_estimated_cost_usd"], 0)
+        self.assertFalse(self.state_dir.exists())
+        self.assertFalse(self.log.exists())
+
+    def test_doctor_exposes_only_authentication_status(self):
+        result = self.call("doctor", env=dict(self.env, FAKE_LOGGED_OUT="1"))
+        self.assertEqual(result.returncode, 1, result.stderr)
+        auth = json.loads(result.stdout)["authentication"]
+        self.assertEqual(auth, dict(logged_in=False, method="simulated", provider=None))
+        self.assertFalse(self.log.exists())
+
+    def test_print_timeout_preserves_metadata_and_releases_lock(self):
+        result = self.call("new", "Fix typo", "--timeout", "0.3", "--", "-p",
+                           env=dict(self.env, FAKE_SLEEP="30"))
+        self.assertEqual(result.returncode, 124, result.stderr)
+        self.assertIn("Tempo limite", result.stderr)
+        task = self.task()
+        self.assertEqual(task["last_exit_code"], 124)
+        self.assertIsNotNone(task["finished_at"])
+        self.assertEqual(self.call("resume", task["id"]).returncode, 0)
+
+    def test_invalid_timeouts_fail_before_state_or_process(self):
+        for args in (("--timeout", "1"), ("--timeout", "nan", "--", "-p"),
+                     ("--timeout", "-1", "--", "-p")):
+            result = self.call("new", "Fix typo", *args)
+            self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertFalse(self.state_dir.exists())
+        self.assertFalse(self.log.exists())
+
     def test_running_task_rejects_concurrent_resume_and_model_edit(self):
         ready = self.root / "ready"
         command = [sys.executable, "-m", "claude_task_router", "--state-dir",
