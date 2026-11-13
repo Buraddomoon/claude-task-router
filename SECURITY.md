@@ -26,6 +26,11 @@ podem conter metadados privados; revise antes de compartilhar.
 
 O launcher usa argv literal, sem shell para prompts. Hooks silenciosos usam
 comando com quoting explícito e só observam execução/UUID/diretório conhecidos.
+O prompt inicial é passado em argv ao Claude e pode aparecer na lista de
+processos, conforme as permissões do sistema. `--prompt-file` muda a entrada
+do roteador, mas não elimina essa exposição no processo filho. Não envie
+segredos literais e não trate esse fluxo como canal confidencial em host
+multiusuário; a interface interativa herdada não oferece essa garantia.
 Não altere executáveis/configuração para código de origem desconhecida. As
 permissões e ferramentas do Claude continuam nativas; `--restricted --tools ''`
 reduz capacidades em testes sem exigir bypass de permissões.
