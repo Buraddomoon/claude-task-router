@@ -1,0 +1,72 @@
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+from claude_task_router.classifier import classify
+from claude_task_router.config import Config
+from claude_task_router.state import Store
+
+
+class StateTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.cwd = Path(self.tmp.name)
+        self.store = Store(self.cwd / "state")
+        self.prompt = "Fix typo SECRET-TEST-PROMPT"
+        self.task = self.store.create(self.cwd, self.prompt, classify(self.prompt).to_dict(),
+                                      Config().snapshot())
+
+    def test_metadata_only_and_permissions(self):
+        task = self.store.get(self.task["id"][:8])
+        self.assertEqual(task["prompt_chars"], len(self.prompt))
+        self.assertNotIn(self.prompt, self.store.path.read_bytes().decode(errors="ignore"))
+        self.assertEqual(self.store.path.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(self.store.root.stat().st_mode & 0o777, 0o700)
+        self.assertEqual(task["config"], Config().snapshot())
+
+    def test_model_and_observation(self):
+        self.store.set_model(self.task["id"], "sonnet")
+        payload = dict(session_id=self.task["id"], cwd=str(self.cwd),
+                       hook_event_name="PostModelSwitch", to_model="claude-opus-test", source="command")
+        self.assertTrue(self.store.observe(payload))
+        task = self.store.get(self.task["id"])
+        self.assertEqual(task["model"], "claude-opus-test")
+        self.assertEqual(task["initial_model"], "haiku")
+        self.assertIsNotNone(task["observed_at"])
+        self.assertEqual(len(self.store.events(task["id"])), 3)
+
+    def test_unknown_session_and_wrong_cwd_ignored(self):
+        payload = dict(session_id=self.task["id"], cwd="/elsewhere", source="startup",
+                       hook_event_name="SessionStart", model="claude-haiku-test")
+        self.assertFalse(self.store.observe(payload))
+        payload.update(cwd=str(self.cwd), session_id="not-a-managed-session")
+        self.assertFalse(self.store.observe(payload))
+        self.assertEqual(self.store.get(self.task["id"])["model"], "haiku")
+
+    def test_locks_reject_duplicate_but_allow_other_tasks(self):
+        other = self.store.create(self.cwd, "hello", classify("hello").to_dict(), {})
+        with self.store.task_lock(self.task["id"]):
+            with self.assertRaisesRegex(ValueError, "já está"):
+                with self.store.task_lock(self.task["id"]):
+                    self.fail("duplicate lock acquired")
+            with self.store.task_lock(other["id"]):
+                pass
+        with self.store.task_lock(self.task["id"]):
+            pass
+
+    def test_latest_is_project_scoped_and_tracks_launch(self):
+        other = self.store.create(self.cwd, "hello", classify("hello").to_dict(), {})
+        self.assertEqual(self.store.get("latest", self.cwd)["id"], other["id"])
+        self.store.launched(self.task["id"])
+        self.assertEqual(self.store.get("latest", self.cwd)["id"], self.task["id"])
+        self.store.finished(self.task["id"], 7)
+        self.assertEqual(self.store.get(self.task["id"])["last_exit_code"], 7)
+        with self.assertRaises(ValueError):
+            self.store.get("latest", self.cwd / "another")
+
+    def test_bad_references(self):
+        for ref in ("../../escape", "x", "%", "' OR 1=1"):
+            with self.assertRaises(ValueError):
+                self.store.get(ref)
