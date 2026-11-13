@@ -88,7 +88,7 @@ def classify(prompt: str, config: Config | None = None) -> Decision:
     truncated = len(prompt) > config.scan_chars
     if truncated:
         reasons.append("scan_limit_reached")
-    if score >= 6:
+    if score >= 5:
         tier = "advanced"
     elif score == 0 and TRIVIAL.search(text) and words <= 100 and paths <= 2 and not truncated:
         tier = "economy"
