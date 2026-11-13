@@ -19,6 +19,10 @@ class StateTests(unittest.TestCase):
         self.prompt = "Fix typo SECRET-TEST-PROMPT"
         self.task = self.store.create(self.cwd, self.prompt, classify(self.prompt).to_dict(),
                                       Config().snapshot())
+        self.execution_id = self.store.launched(self.task["id"])
+
+    def observe(self, payload):
+        return self.store.observe(payload, self.execution_id)
 
     def test_metadata_only_and_permissions(self):
         task = self.store.get(self.task["id"][:8])
@@ -32,7 +36,7 @@ class StateTests(unittest.TestCase):
         self.store.set_model(self.task["id"], "sonnet")
         payload = dict(session_id=self.task["id"], cwd=str(self.cwd),
                        hook_event_name="PostModelSwitch", to_model="claude-opus-test", source="command")
-        self.assertTrue(self.store.observe(payload))
+        self.assertTrue(self.observe(payload))
         task = self.store.get(self.task["id"])
         self.assertEqual(task["model"], "claude-opus-test")
         self.assertEqual(task["initial_model"], "haiku")
@@ -42,20 +46,20 @@ class StateTests(unittest.TestCase):
     def test_only_manual_sources_change_intent(self):
         for source in ("command", "picker", "sdk"):
             with self.subTest(source=source):
-                self.assertTrue(self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
+                self.assertTrue(self.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
                     hook_event_name="PostModelSwitch", source=source, requested_model="opus",
                     to_model="claude-opus-test")))
                 task = self.store.get(self.task["id"])
                 self.assertEqual(task["model"], "opus")
                 self.assertEqual(task["resolved_model"], "claude-opus-test")
         for source in ("auto", "resume"):
-            self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
+            self.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
                 hook_event_name="PostModelSwitch", source=source, to_model="claude-sonnet-test"))
             self.assertEqual(self.store.get(self.task["id"])["model"], "opus")
         self.assertEqual(self.store.get(self.task["id"])["effective_model"], "claude-sonnet-test")
 
     def test_initial_substitution_never_becomes_choice(self):
-        self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
+        self.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
             hook_event_name="SessionStart", source="startup", model="claude-opus-fallback"))
         task = self.store.get(self.task["id"])
         self.assertEqual(task["model"], "haiku")
@@ -66,9 +70,9 @@ class StateTests(unittest.TestCase):
     def test_unknown_session_and_wrong_cwd_ignored(self):
         payload = dict(session_id=self.task["id"], cwd="/elsewhere", source="startup",
                        hook_event_name="SessionStart", model="claude-haiku-test")
-        self.assertFalse(self.store.observe(payload))
+        self.assertFalse(self.observe(payload))
         payload.update(cwd=str(self.cwd), session_id="not-a-managed-session")
-        self.assertFalse(self.store.observe(payload))
+        self.assertFalse(self.observe(payload))
         self.assertEqual(self.store.get(self.task["id"])["model"], "haiku")
 
     def test_locks_reject_duplicate_but_allow_other_tasks(self):
@@ -102,9 +106,8 @@ class StateTests(unittest.TestCase):
         transcript = config_root / "projects/fake" / (self.task["id"] + ".jsonl")
         transcript.parent.mkdir(parents=True)
         with patch.dict("os.environ", CLAUDE_CONFIG_DIR=str(config_root)):
-            self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd), source="startup",
+            self.observe(dict(session_id=self.task["id"], cwd=str(self.cwd), source="startup",
                 hook_event_name="SessionStart", transcript_path=str(transcript)))
-            self.store.launched(self.task["id"])
             old = datetime.now(timezone.utc) - timedelta(hours=1)
             def entry(session, at, model):
                 return json.dumps(dict(type="assistant", sessionId=session,
@@ -114,10 +117,56 @@ class StateTests(unittest.TestCase):
             self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
             with transcript.open("a") as stream:
                 stream.write(entry(self.task["id"], datetime.now(timezone.utc), "real-model") + "\n")
-            self.store.observe(dict(session_id=self.task["id"], cwd=str(self.cwd), source="command",
+            self.observe(dict(session_id=self.task["id"], cwd=str(self.cwd), source="command",
                 hook_event_name="PostModelSwitch", to_model="manual-newer"))
             self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
             self.assertEqual(self.store.get(self.task["id"])["model"], "manual-newer")
+
+    def test_execution_reset_and_late_hooks(self):
+        payload = dict(session_id=self.task["id"], cwd=str(self.cwd), source="startup",
+                       hook_event_name="SessionStart", model="claude-haiku-test")
+        self.assertTrue(self.observe(payload))
+        previous = self.execution_id
+        current = self.store.launched(self.task["id"])
+        task = self.store.get(self.task["id"])
+        self.assertNotEqual(previous, current)
+        self.assertIsNone(task["observed_at"])
+        self.assertIsNone(task["effective_model"])
+        self.assertEqual(task["resolved_model"], "claude-haiku-test")
+        self.assertFalse(self.store.observe(payload, previous))
+        self.assertFalse(self.store.observe(payload))
+        self.store.finished(self.task["id"], 0)
+        self.store.set_model(self.task["id"], "opus")
+        payload.update(hook_event_name="PostModelSwitch", to_model="sonnet", source="command")
+        self.assertFalse(self.store.observe(payload, current))
+        self.assertEqual(self.store.get(self.task["id"])["model"], "opus")
+
+    def test_partial_and_delayed_startup_payload(self):
+        payload = dict(session_id=self.task["id"], cwd=str(self.cwd), source="startup",
+                       hook_event_name="SessionStart")
+        self.assertTrue(self.observe(payload))
+        self.assertIsNone(self.store.get(self.task["id"])["observed_at"])
+        self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
+        self.assertTrue(self.observe(dict(payload, source="picker", hook_event_name="PostModelSwitch",
+                                          to_model="opus")))
+        self.assertFalse(self.observe(dict(payload, model="haiku")))
+        self.assertEqual(self.store.get(self.task["id"])["effective_model"], "opus")
+
+    def test_transcript_cannot_confirm_prior_run_or_pre_manual_choice(self):
+        config = self.cwd / "claude-config"
+        path = config / "projects/fake" / (self.task["id"] + ".jsonl")
+        path.parent.mkdir(parents=True)
+        at = datetime.now(timezone.utc).isoformat()
+        path.write_text(json.dumps(dict(type="assistant", sessionId=self.task["id"],
+            timestamp=at, message=dict(model="claude-haiku-old"))) + "\n")
+        self.execution_id = self.store.launched(self.task["id"])
+        with patch.dict("os.environ", CLAUDE_CONFIG_DIR=str(config)):
+            self.assertTrue(self.observe(dict(session_id=self.task["id"], cwd=str(self.cwd),
+                source="resume", hook_event_name="SessionStart", transcript_path=str(path))))
+            self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
+            self.store.set_model(self.task["id"], "opus")
+            self.assertFalse(self.store.reconcile_transcript(self.task["id"]))
+            self.assertIsNone(self.store.get(self.task["id"])["observed_at"])
 
     def test_transcript_path_is_restricted(self):
         self.assertIsNone(self.store.valid_transcript("/etc/passwd", self.task["id"]))
@@ -130,6 +179,9 @@ class StateTests(unittest.TestCase):
             db.execute("ALTER TABLE tasks DROP COLUMN hook_seen_at")
             db.execute("ALTER TABLE tasks DROP COLUMN effective_model")
             db.execute("ALTER TABLE tasks DROP COLUMN resolved_model")
+            for column in ("execution_id", "finished_at", "choice_revision", "choice_changed_at"):
+                db.execute(f"ALTER TABLE tasks DROP COLUMN {column}")
+            db.execute("ALTER TABLE events DROP COLUMN execution_id")
             db.execute("PRAGMA user_version=1")
         migrated = Store(self.store.root)
         self.assertEqual(migrated.get(self.task["id"])["model"], "haiku")

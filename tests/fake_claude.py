@@ -48,7 +48,8 @@ def hook(event, payload):
                 sys.exit(90)
 
 
-hook("SessionStart", payload)
+if not os.environ.get("FAKE_NO_HOOKS"):
+    hook("SessionStart", payload)
 if os.environ.get("FAKE_MANUAL_MODEL"):
     hook("PostModelSwitch", dict(payload, hook_event_name="PostModelSwitch",
                                  to_model=os.environ["FAKE_MANUAL_MODEL"], source="command"))

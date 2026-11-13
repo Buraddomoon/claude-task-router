@@ -42,7 +42,7 @@ class Store:
         os.close(fd)
         with self.connect() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1, 2, 3):
+            if version not in (0, 1, 2, 3, 4):
                 raise ValueError(f"Banco de versão {version} não suportado.")
             if version == 1:
                 db.execute("ALTER TABLE tasks ADD COLUMN transcript_path TEXT")
@@ -79,6 +79,14 @@ class Store:
                     db.execute("UPDATE tasks SET model=?,effective_model=?,resolved_model=? WHERE id=?",
                                (choice, effective, resolved, row["id"]))
                 db.execute("PRAGMA user_version = 3")
+            if version < 4:
+                for column in ("execution_id TEXT", "finished_at TEXT",
+                               "choice_revision INTEGER NOT NULL DEFAULT 0", "choice_changed_at TEXT"):
+                    db.execute(f"ALTER TABLE tasks ADD COLUMN {column}")
+                db.execute("ALTER TABLE events ADD COLUMN execution_id TEXT")
+                # Legacy observations have no execution identity.
+                db.execute("UPDATE tasks SET observed_at=NULL,effective_model=NULL,hook_seen_at=NULL")
+                db.execute("PRAGMA user_version = 4")
 
     @contextmanager
     def connect(self):
@@ -129,13 +137,13 @@ class Store:
         where, args = ("", ()) if all_projects else ("WHERE cwd = ?", (str(cwd.resolve()),))
         with self.connect() as db:
             rows = db.execute(f"""SELECT id,cwd,model,effective_model,resolved_model,tier,created_at,updated_at,
-                last_launched_at,last_exit_code,observed_at FROM tasks {where}
+                last_launched_at,last_exit_code,observed_at,execution_id FROM tasks {where}
                 ORDER BY COALESCE(last_launched_at,created_at) DESC LIMIT ?""", (*args, limit)).fetchall()
         return [dict(row) for row in rows]
 
     def events(self, task_id: str) -> list[dict]:
         with self.connect() as db:
-            rows = db.execute("SELECT at,kind,model,source FROM events WHERE task_id=? ORDER BY id",
+            rows = db.execute("SELECT at,kind,model,source,execution_id FROM events WHERE task_id=? ORDER BY id",
                               (task_id,)).fetchall()
         return [dict(row) for row in rows]
 
@@ -144,14 +152,15 @@ class Store:
         timestamp = now()
         with self.connect() as db:
             changed = db.execute("""UPDATE tasks SET model=?,updated_at=?,observed_at=NULL,
-                                 effective_model=NULL,resolved_model=NULL WHERE id=?""",
-                                 (model, timestamp, task_id)).rowcount
+                                 effective_model=NULL,resolved_model=NULL,
+                                 choice_revision=choice_revision+1,choice_changed_at=? WHERE id=?""",
+                                 (model, timestamp, timestamp, task_id)).rowcount
             if changed != 1:
                 raise ValueError("Tarefa não encontrada.")
             db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
                        (task_id, timestamp, "model_requested", model, source))
 
-    def observe(self, payload: dict) -> bool:
+    def observe(self, payload: dict, execution_id: str | None = None) -> bool:
         event = payload.get("hook_event_name")
         if event not in {"SessionStart", "PostModelSwitch"}:
             return False
@@ -167,8 +176,14 @@ class Store:
             return False
         timestamp = now()
         with self.connect() as db:
-            row = db.execute("SELECT cwd,model,resolved_model FROM tasks WHERE id=?", (task_id,)).fetchone()
-            if not row or Path(cwd).resolve() != Path(row["cwd"]):
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
+            if (not row or not execution_id or row["execution_id"] != execution_id
+                    or row["finished_at"] or row["updated_at"] > timestamp
+                    or Path(cwd).resolve() != Path(row["cwd"])):
+                return False
+            # A delayed startup payload cannot undo a switch already observed.
+            if event == "SessionStart" and row["observed_at"]:
                 return False
             transcript = self.valid_transcript(payload.get("transcript_path"), task_id)
             db.execute("""UPDATE tasks SET hook_seen_at=?,
@@ -181,6 +196,8 @@ class Store:
                     requested = payload.get("requested_model") or model
                     choice = validate_model(requested)
                     resolved = None
+                    db.execute("""UPDATE tasks SET choice_revision=choice_revision+1,
+                               choice_changed_at=? WHERE id=?""", (timestamp, task_id))
                 target = resolved or choice
                 compatible = matches_choice(target, model)
                 if source != "auto" and compatible and not resolved:
@@ -189,10 +206,12 @@ class Store:
                            updated_at=?,observed_at=? WHERE id=?""",
                            (choice, resolved, model, timestamp, timestamp, task_id))
                 if source == "auto" or not compatible:
-                    db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
-                               (task_id, timestamp, "model_diverged", model, source))
-            db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
-                       (task_id, timestamp, event, model, source))
+                    db.execute("INSERT INTO events(task_id,at,kind,model,source,execution_id) VALUES(?,?,?,?,?,?)",
+                               (task_id, timestamp, "model_diverged", model, source, execution_id))
+            elif event == "PostModelSwitch":
+                db.execute("UPDATE tasks SET effective_model=NULL,observed_at=NULL WHERE id=?", (task_id,))
+            db.execute("INSERT INTO events(task_id,at,kind,model,source,execution_id) VALUES(?,?,?,?,?,?)",
+                       (task_id, timestamp, event, model, source, execution_id))
         return True
 
     @staticmethod
@@ -211,7 +230,7 @@ class Store:
         Never override an observed model switch or reuse a response from a prior run.
         """
         task = self.get(task_id)
-        if task["observed_at"] or not task["last_launched_at"]:
+        if task["observed_at"] or not task["execution_id"] or not task["hook_seen_at"]:
             return False
         path = self.valid_transcript(task["transcript_path"], task_id)
         if not path or not path.is_file():
@@ -230,7 +249,9 @@ class Store:
                         or entry.get("sessionId") != task_id):
                     continue
                 at = datetime.fromisoformat(entry["timestamp"].replace("Z", "+00:00"))
-                if at < datetime.fromisoformat(task["last_launched_at"]):
+                lower = max(task["last_launched_at"], task["choice_changed_at"] or "", task["hook_seen_at"])
+                upper = task["finished_at"] or now()
+                if not datetime.fromisoformat(lower) <= at <= datetime.fromisoformat(upper):
                     continue
                 model = entry["message"]["model"]
                 if not model or model.startswith("<"):
@@ -245,27 +266,34 @@ class Store:
                 compatible = matches_choice(target, model)
                 resolved = model if compatible else task["resolved_model"]
                 changed = db.execute("""UPDATE tasks SET effective_model=?,resolved_model=?,observed_at=?,updated_at=?
-                    WHERE id=? AND observed_at IS NULL AND model=?""",
-                    (model, resolved, timestamp, timestamp, task_id, task["model"])).rowcount
+                    WHERE id=? AND observed_at IS NULL AND model=? AND execution_id=?
+                    AND choice_revision=?""",
+                    (model, resolved, timestamp, timestamp, task_id, task["model"],
+                     task["execution_id"], task["choice_revision"])).rowcount
                 if changed:
-                    db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
-                               (task_id, timestamp, "model_resolved", model, "transcript_tail"))
+                    db.execute("INSERT INTO events(task_id,at,kind,model,source,execution_id) VALUES(?,?,?,?,?,?)",
+                               (task_id, timestamp, "model_resolved", model, "transcript_tail", task["execution_id"]))
                     if not compatible:
-                        db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
-                                   (task_id, timestamp, "model_diverged", model, "transcript_tail"))
+                        db.execute("INSERT INTO events(task_id,at,kind,model,source,execution_id) VALUES(?,?,?,?,?,?)",
+                                   (task_id, timestamp, "model_diverged", model, "transcript_tail", task["execution_id"]))
             return bool(changed)
         return False
 
     def launched(self, task_id: str):
         timestamp = now()
+        execution_id = str(uuid.uuid4())
         with self.connect() as db:
-            db.execute("UPDATE tasks SET launches=launches+1,last_launched_at=?,updated_at=? WHERE id=?",
-                       (timestamp, timestamp, task_id))
+            db.execute("""UPDATE tasks SET launches=launches+1,last_launched_at=?,updated_at=?,
+                       execution_id=?,finished_at=NULL,last_exit_code=NULL,observed_at=NULL,
+                       effective_model=NULL,hook_seen_at=NULL,transcript_path=NULL WHERE id=?""",
+                       (timestamp, timestamp, execution_id, task_id))
+        return execution_id
 
     def finished(self, task_id: str, exit_code: int):
+        timestamp = now()
         with self.connect() as db:
-            db.execute("UPDATE tasks SET last_exit_code=?,updated_at=? WHERE id=?",
-                       (exit_code, now(), task_id))
+            db.execute("UPDATE tasks SET last_exit_code=?,updated_at=?,finished_at=? WHERE id=?",
+                       (exit_code, timestamp, timestamp, task_id))
 
     @contextmanager
     def task_lock(self, task_id: str):

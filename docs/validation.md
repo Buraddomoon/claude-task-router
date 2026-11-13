@@ -37,3 +37,7 @@ Foram três chamadas de inferência no total, contando o smoke inicial. Custos r
 Regressões offline cobrem auto após resolução, substituição já em SessionStart, fontes manuais command/picker/sdk, restauração resume e retomada com o ID compatível original. O fake Claude executa hooks como subprocessos reais e confirma que switchModelsOnFlag=false não acrescenta uma allowlist. A intenção permanece em model, mesmo quando effective_model diverge. O ID fixado fica em resolved_model.
 
 Controle nativo conferido no --help do Claude 2.1.323 e na documentação oficial de [modelos](https://code.claude.com/docs/en/model-config#ask-before-switching) e [PostModelSwitch](https://code.claude.com/docs/en/hooks#postmodelswitch). Não houve chamada de inferência nesta etapa; as substituições são simuladas, sem alegar garantia de estabilidade do provedor.
+
+## Issue #14 — confirmação por execução
+
+Cada lançamento cria execution_id antes de iniciar o subprocesso; o token segue no comando dos hooks e nos eventos observados. A suíte verifica retomada sem hooks após execução confirmada, payload parcial, hook sem token, hook atrasado da execução anterior ou posterior à saída, e SessionStart atrasado após mudança manual. A leitura da transcrição exige hook da execução atual, timestamps dentro da execução e posteriores ao último hook/override; uma comparação atômica inclui execution_id e revisão da escolha para não sobrescrever alterações concorrentes. O ID já fixado permanece disponível sem ser apresentado como confirmação atual.

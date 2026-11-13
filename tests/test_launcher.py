@@ -29,7 +29,7 @@ class LauncherTests(unittest.TestCase):
         self.state_dir = self.root / "state"
         self.log = self.root / "fake.jsonl"
         self.env = dict(os.environ, FAKE_LOG=str(self.log), PYTHONPATH=str(ROOT))
-        for key in ("FAKE_MANUAL_MODEL", "FAKE_SLEEP", "FAKE_EXIT", "FAKE_READY", "FAKE_NO_MODEL", "FAKE_AUTO_MODEL"):
+        for key in ("FAKE_MANUAL_MODEL", "FAKE_SLEEP", "FAKE_EXIT", "FAKE_READY", "FAKE_NO_MODEL", "FAKE_AUTO_MODEL", "FAKE_NO_HOOKS"):
             self.env.pop(key, None)
         FAKE.chmod(0o755)
 
@@ -82,6 +82,20 @@ class LauncherTests(unittest.TestCase):
         result = self.call("resume", task["id"], env=env)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.logs()[-1]["model"], "claude-haiku-test-001")
+
+    def test_resume_without_hooks_needs_current_confirmation(self):
+        self.assertEqual(self.call("new", "Fix typo").returncode, 0)
+        before = self.task()
+        self.assertIsNotNone(before["observed_at"])
+        result = self.call("resume", before["id"], env=dict(self.env, FAKE_NO_HOOKS="1"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("modelo efetivo não observado", result.stderr)
+        task = self.task()
+        self.assertNotEqual(task["execution_id"], before["execution_id"])
+        self.assertIsNone(task["observed_at"])
+        self.assertIsNone(task["hook_seen_at"])
+        self.assertIsNone(task["effective_model"])
+        self.assertEqual(task["resolved_model"], before["resolved_model"])
 
     def test_manual_model_bypasses_classification(self):
         with patch("claude_task_router.cli.classify", side_effect=AssertionError("classification")), \

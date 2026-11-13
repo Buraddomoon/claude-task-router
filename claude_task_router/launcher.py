@@ -56,9 +56,9 @@ def executable(binary: str) -> str:
     return str(Path(resolved).absolute())
 
 
-def hook_settings(state_dir: Path) -> str:
+def hook_settings(state_dir: Path, execution_id: str) -> str:
     command = shlex.join([sys.executable, str(Path(__file__).with_name("hook.py").resolve()),
-                          "--state-dir", str(state_dir)])
+                          "--state-dir", str(state_dir), "--execution-id", execution_id])
     return json.dumps({"switchModelsOnFlag": False, "hooks": {
         event: [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}]
         for event in ("SessionStart", "PostModelSwitch")
@@ -71,7 +71,7 @@ def build_command(binary: str, task: dict, state_dir: Path, prompt: str | None,
     model = validate_model(launch_model(task))
     command = [binary, "--model", model,
                "--resume" if resume else "--session-id", task["id"],
-               "--settings", hook_settings(state_dir), *extra]
+               "--settings", hook_settings(state_dir, task["execution_id"]), *extra]
     if prompt is not None:
         # Prevent leading dashes in user text from becoming Claude CLI flags.
         command.extend(["--", prompt])
@@ -82,6 +82,9 @@ def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], re
     cwd = Path(task["cwd"])
     if not cwd.is_dir():
         raise ValueError(f"Diretório original não existe: {cwd}")
+    validate_extra(extra)
+    store.launched(task["id"])
+    task = store.get(task["id"])
     command = build_command(binary, task, store.root, prompt, extra, resume)
     print(f"[ctr] tarefa={task['id']} solicitado={task['model']} modelo={launch_model(task)} "
           f"{'retomada' if resume else 'nova'}", file=sys.stderr)
@@ -94,7 +97,6 @@ def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], re
     for signum in (signal.SIGTERM, signal.SIGHUP):
         handlers[signum] = signal.signal(signum, forward)
     try:
-        store.launched(task["id"])
         while True:
             try:
                 result = child.wait()

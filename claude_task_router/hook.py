@@ -14,6 +14,7 @@ from claude_task_router.state import Store  # noqa: E402
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--state-dir", type=Path, required=True)
+    parser.add_argument("--execution-id")
     args = parser.parse_args()
     try:
         raw = sys.stdin.buffer.read(65537)
@@ -21,7 +22,7 @@ def main():
             return 0
         payload = json.loads(raw)
         if isinstance(payload, dict):
-            Store(args.state_dir).observe(payload)
+            Store(args.state_dir).observe(payload, args.execution_id)
     except (ValueError, TypeError, OSError, sqlite3.Error):
         # Hooks must never inject error text into the model's context or block work.
         pass

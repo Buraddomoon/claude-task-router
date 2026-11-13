@@ -36,3 +36,5 @@ SQLite guarda UUID, diretório de trabalho, modelo solicitado, ID resolvido comp
 - Se hooks forem desativados por configurações administradas ou pelo usuário, o ID efetivo e `/model` não poderão ser sincronizados. Use ID explícito e `ctr model` nesses ambientes; o status mostra se houve observação.
 - O roteador não mede faturamento nem garante economia percentual ou qualidade. Latência local e comportamento são testáveis; consumo total depende do trabalho e do Claude.
 - Linux/macOS, Python 3.11+. Windows nativo, proxy de API, roteamento automático dentro de IDE e um backend Codex ficam fora deste incremento.
+
+Observações são vinculadas a execution_id, criado antes de Popen e incluído nos comandos dos hooks. O início limpa observed_at, effective_model, hook_seen_at e caminho de transcrição da execução anterior, preservando model/resolved_model. Hooks só atualizam a execução corrente ainda aberta. Transcrições exigem evidência atual, intervalo temporal válido e comparação atômica de execução e choice_revision; nenhuma transação permanece aberta durante leitura de conteúdo ou execução do Claude.
