@@ -1,13 +1,13 @@
 # ADR 0001 — Fronteiras de tarefa na conversa nativa
 
 Data: 16/11/2026. Viabilidade #38; implementação #39; validação #40; entrega #32.
-Estado: **supervisão nativa comprovada em Linux; implementação experimental;
-aceite completo de #32/#39/#40 pendente**.
+Estado: **implementação #39 entregue com detecção contextual e QA nativo Linux;
+#32/#40 aguardam o aceite nativo macOS**.
 
 ## Decisão
 
 Usar um supervisor opt-in (`--conversation-routing`) para substituir o processo
-Claude no mesmo terminal quando uma fronteira explícita é reconhecida. O hook
+Claude no mesmo terminal quando uma fronteira é explícita ou inferida e confirmada. O hook
 segura o prompt; o supervisor encerra o cliente antigo com SIGTERM, espera sua
 saída e inicia outra TUI nativa com `--model` e `--session-id`. O prompt passa
 por socket Unix privado, somente em memória. Nenhuma tecla é sintetizada.
@@ -19,9 +19,11 @@ CLI. O setter continua ausente; a substituição do processo resolve o controle
 para fronteiras explícitas. A tela reinicia, sem o usuário sair ou executar
 outro comando. Isso é diferente da troca de modelo dentro do mesmo processo.
 
-A #38 entrega a viabilidade ampliada. #39 tem uma implementação experimental;
-#40 publicou avaliação com recall insuficiente para mudanças livres. #32/#39/#40
-continuam abertas. A opção exige Claude 2.1.295+ para bloquear falhas de hook;
+A #38 entrega a viabilidade ampliada. #39 entrega a implementação opt-in;
+a [evolução contextual](../contextual-conversation-qa.md) reconheceu 16/16 novas
+tarefas reservadas e confirmou o fluxo real sem marcador em Linux. A avaliação
+inicial de 25% permanece preservada. #32/#40 continuam abertas por falta de Mac,
+confirmada pelo usuário. A opção exige Claude 2.1.295+ para bloquear falhas de hook;
 o modo padrão e sua versão mínima 2.1.251 permanecem preservados.
 
 ## Superfícies verificadas
@@ -91,7 +93,8 @@ que uma interface própria não satisfaz o aceite da conversa nativa.
 | Concorrência e hooks atrasados | Locks por tarefa, identidade de execução e revisão de escolha impedem observações de outra execução de confirmar/alterar a atual |
 | Privacidade | Prompt apenas em memória para regras limitadas; banco sem texto, transcrição ou credenciais; zero instruções de roteamento no contexto |
 
-O supervisor e seus testes demonstram controle **e ordem** para marcadores:
+O supervisor e seus testes demonstram controle **e ordem** para marcadores
+e objetivos inferidos e confirmados:
 evento de entrada → decisão local única → aplicação confirmada de modelo e
 identidade → primeira resposta no destino. Saída forçada, falha de estado ou
 falha de inicialização não executam um retry; a tarefa anterior fica preservada.
@@ -102,9 +105,14 @@ um hook, e muda o produto. Só se justifica com escopo revisto e evidência.
 ## Operação e pendências
 
 Sem a opção experimental, o fluxo continua sendo sair e executar `ctr new`, ou
-retomar com `ctr resume`. No modo experimental, `Nova tarefa: ...` / `New task: ...`
-inicia a transição; mensagens sem fronteira inequívoca preservam tarefa/modelo,
-com aviso visível quando há abstenção. `/model` continua sincronizado.
+retomar com `ctr resume`. No modo de conversa, `Nova tarefa: ...` / `New task: ...`
+inicia uma transição explícita. Objetivos inferidos ficam retidos e só mudam a
+tarefa após escolha efêmera na própria TUI. A opção de continuação reabre o
+mesmo UUID/modelo e executa o pedido uma vez, sem classificar; cancelamento
+preserva a sessão. Contexto lexical fica apenas em memória, reconstituído do
+primeiro pedido na transcrição nativa validada quando há retomada.
+Mensagens sem fronteira inequívoca preservam tarefa/modelo, com aviso quando
+há abstenção. `/model` continua sincronizado.
 `/clear` e `/resume` nativos não criam tarefas gerenciadas: a gate bloqueia
 prompts de UUID diferente; saia e retome pelo `ctr` para sincronizar a identidade.
 
@@ -112,9 +120,9 @@ Não usar automação de teclas como mecanismo de produção, alteração do bin
 proxy, login capturado, endpoint privado ou instruções de classificação no
 contexto. O PTY do ensaio serve apenas para testar comandos públicos.
 
-O controle antes bloqueado foi demonstrado em Linux. Ainda faltam detecção
-de mudanças livres com os limiares fixados, maior cobertura de falhas nativas
-e #30: máquina macOS com conta autorizada. A origem de `UserPromptSubmit`
+O controle antes bloqueado e a detecção contextual com os limiares fixados
+foram demonstrados em Linux, incluindo erro e interrupção reais. Falta #30:
+máquina macOS com conta autorizada. A origem de `UserPromptSubmit`
 também não distingue todas as mensagens humanas de eventos internos: não
 homologamos este modo com tarefas agendadas ou retornos de agentes. A CI
-simulada não substitui essas evidências. Ver [resultados](../../evaluation/conversation-boundary-results.json).
+simulada não substitui essa evidência. Ver [resultados V2](../../evaluation/conversation-boundary-results-v2.json).

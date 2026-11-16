@@ -4,8 +4,9 @@ Atualização de viabilidade em 16/11/2026: a
 [ADR 0001](adr/0001-conversation-task-boundaries.md) e a
 [prova em Claude Code 2.1.325](native-boundary-feasibility.md) investigam #32/#38.
 A investigação foi ampliada com [supervisão POSIX e nova prova nativa](native-supervisor-proof.md).
-O modo experimental troca o processo no mesmo terminal para fronteiras explícitas;
-detecção livre e homologação completa continuam pendentes. #32 não está entregue.
+O modo opt-in troca o processo no mesmo terminal para fronteiras explícitas ou
+inferidas e confirmadas. A [implementação contextual e QA Linux](contextual-conversation-qa.md)
+entregam #39; #32/#40 aguardam a homologação nativa macOS.
 
 Consulta: 13/11/2026. Ambiente observado: Claude Code 2.1.323, Codex CLI 0.167.2. Documentação e disponibilidade podem mudar; `ctr doctor` verifica a interface instalada sem inferência.
 
@@ -34,11 +35,11 @@ Aliases são configuráveis para cada provedor; não há preços nem versões co
 
 SQLite guarda UUID, diretório de trabalho, modelo solicitado, ID resolvido compatível, modelo efetivo, tier, motivos enumerados, snapshot de política, tamanho e hash do primeiro prompt, caminho da transcrição, timestamps e eventos. O texto do prompt e o conteúdo das transcrições ficam fora desse banco. O Claude mantém seu próprio histórico segundo as configurações existentes. Cada tarefa possui lock POSIX durante sua execução; hooks atualizam somente sessões já conhecidas e no diretório esperado. Transações são curtas e não ficam abertas enquanto o subprocesso executa.
 
-`--model` explícito e `ctr model` têm prioridade. O hook PostModelSwitch registra a mudança efetiva; somente sources command/picker/sdk atualizam a intenção (requested_model quando presente, to_model como alternativa). Sources auto/resume nunca substituem a escolha. IDs resolvidos não são renovados por eventos auto. Divergências ficam em eventos model_diverged. Hooks não escrevem nada em stdout: nenhum token de contexto de roteamento é acrescentado. Em versões sem PostModelSwitch, `ctr doctor` informa incompatibilidade; versão mínima suportada: 2.1.251.
+`--model` explícito e `ctr model` têm prioridade. O hook PostModelSwitch registra a mudança efetiva; somente sources command/picker/sdk atualizam a intenção (requested_model quando presente, to_model como alternativa). Sources auto/resume nunca substituem a escolha. IDs resolvidos não são renovados por eventos auto. Divergências ficam em eventos model_diverged. Hooks de observação são silenciosos. O helper de conversa emite somente decisões de bloqueio e avisos visíveis ao usuário, sem `additionalContext` ou instruções para o modelo. Em versões sem PostModelSwitch, `ctr doctor` informa incompatibilidade; versão mínima suportada: 2.1.251, ou 2.1.295 para o modo de conversa.
 
 ## Limites deliberados
 
-- Uma nova tarefa exige `ctr new`. `/clear`, `/resume` e forks feitos dentro do Claude não criam tarefas gerenciadas; sair e usar o launcher mantém a fronteira explícita.
+- No modo padrão, uma nova tarefa exige `ctr new`. O modo opt-in reconhece objetivos independentes dentro da TUI e solicita escolha antes de aplicar fronteiras inferidas. `/clear`, `/resume` e forks feitos dentro do Claude não criam tarefas gerenciadas; prompts de outro UUID são bloqueados pela gate até retomar pelo launcher.
 - O roteador não troca modelo durante a execução. Fallbacks e substituições internas do Claude/provedor ainda podem acontecer, inclusive no modo plan com Haiku; o launcher não promete impedir essas políticas. Não configura cadeias de fallback e não usa `opusplan`. Envia switchModelsOnFlag=false para o controle nativo de confirmação de fallback de conteúdo, sem limitar availableModels ou o override manual. Cadeias nativas por turno podem não disparar PostModelSwitch; effective_model representa uma observação, não prova o modelo de todas as respostas.
 - Se hooks forem desativados por configurações administradas ou pelo usuário, o ID efetivo e `/model` não poderão ser sincronizados. Use ID explícito e `ctr model` nesses ambientes; o status mostra se houve observação.
 - O roteador não mede faturamento nem garante economia percentual ou qualidade. Latência local e comportamento são testáveis; consumo total depende do trabalho e do Claude.

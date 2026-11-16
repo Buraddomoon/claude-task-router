@@ -4,6 +4,15 @@ O launcher continua exclusivo para Claude Code. Não exige conta adicional,
 chave compartilhada, serviço em nuvem ou instruções de roteamento no contexto.
 O usuário autentica diretamente no Claude Code original.
 
+O checkout `main` também oferece `ctr new "Sua tarefa" --conversation-routing`
+(Claude Code 2.1.295+). Nesse modo opt-in, um novo objetivo digitado na conversa
+pode ser reconhecido sem marcador: o pedido fica retido até você escolher nova
+tarefa, mesma tarefa ou cancelar na UI. Limpe o rascunho com Ctrl-C uma vez e
+envie o comando exibido. A nova tarefa recebe outra sessão/modelo; a continuação
+mantém UUID, histórico e escolha manual sem classificar novamente. Veja a
+[implementação e homologação Linux](contextual-conversation-qa.md). A homologação
+com Claude real no macOS ainda depende de uma máquina disponível.
+
 ```bash
 ctr run "Corrija o typo no README.md"    # tarefa nova, decisão local
 ctr "Continue com os testes"             # retoma a tarefa recente deste projeto

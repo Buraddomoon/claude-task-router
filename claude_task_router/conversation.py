@@ -15,7 +15,7 @@ import tempfile
 import time
 
 from .classifier import normalize, validate_prompt
-from .topics import TaskContext, contextual_action
+from .topics import TaskContext, contextual_action, UNCERTAIN, PRESENTATION
 
 MAX_MESSAGE = 1024 * 1024
 NEW = re.compile(
@@ -30,6 +30,8 @@ def boundary(prompt):
     if not match:
         return False
     body = match.group(1)
+    if UNCERTAIN.search(PRESENTATION.sub("", body)):
+        return False
     # Quoted examples, questions and denials must not cause a handoff.
     return not re.match(r"(?:nao\b|nunca\b|not\b|no\b|do not\b|don't\b|"
                         r"don’t\b|never\b|talvez\b|maybe\b|[\"'`?])", body)
@@ -53,7 +55,7 @@ CONTROL = re.compile(r"^ctr:(new|continue|cancel)\s+([a-f0-9]{6})$")
 class PromptGate:
     def __init__(self, task, initial_prompt, context=None):
         self.task = task
-        self.initial_hash = (hashlib.sha256(initial_prompt.encode()).digest()
+        self.initial_hash = (hashlib.sha256(initial_prompt.strip().encode()).digest()
                              if initial_prompt is not None else None)
         self.token = secrets.token_hex(32)
         self.context = context or TaskContext.from_prompt(initial_prompt)
@@ -117,8 +119,8 @@ class PromptGate:
                 return None
             # Claude submits the CLI's initial prompt through this hook too.
             # Consume the exemption once, never on a later identical message.
-            initial, self.initial_hash = self.initial_hash, None
-            if initial == hashlib.sha256(prompt.encode()).digest():
+            if self.initial_hash == hashlib.sha256(prompt.strip().encode()).digest():
+                self.initial_hash = None
                 peer.sendall(b'{"action":"continue"}\n')
                 return None
             control = CONTROL.fullmatch(prompt.strip().lower())
@@ -144,6 +146,7 @@ class PromptGate:
             if self.proposal and time.monotonic() <= self.proposal[2]:
                 self.block(peer, self.proposal_reason(self.proposal[1]))
                 return None
+            self.initial_hash = None
             self.proposal = None
             action = detect(prompt, self.context)
             if action != "new":
@@ -178,6 +181,6 @@ class PromptGate:
     @staticmethod
     def proposal_reason(code):
         return ("Parece um novo objetivo. O pedido ainda não foi executado. "
-            "Substitua o rascunho (Ctrl-U) por uma escolha: "
+            "Limpe o rascunho (Ctrl-C uma vez) e envie uma escolha: "
             f"ctr:new {code} (nova tarefa), ctr:continue {code} (mesma tarefa), "
             f"ctr:cancel {code} (cancelar).")

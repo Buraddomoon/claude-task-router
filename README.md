@@ -118,16 +118,24 @@ permitiu implementar um modo experimental no checkout `main`:
 
 ```bash
 ctr new "Sua tarefa inicial" --conversation-routing
-# Dentro do Claude aberto, digite: Nova tarefa: implemente outro objetivo
+# Dentro do Claude aberto, peça outro objetivo e escolha na UI do roteador.
 ```
 
-Exige Claude 2.1.295+. O supervisor reinicia a TUI no mesmo terminal, preserva
-a tarefa anterior e classifica a nova uma única vez. Continuações mantêm a
-escolha, inclusive manual. Sem fronteira clara, mostra aviso e preserva a tarefa.
-Só marcadores explícitos são reconhecidos nesta etapa; a avaliação reservada
-teve recall de 25% para novas tarefas. A #32 continua aberta. macOS nativo e
-eventos de agentes/agendamentos não foram homologados neste modo. A tag v1.1.0
-não contém esta opção; use o checkout `main` e reinstale para experimentá-la.
+Exige Claude 2.1.295+. A [detecção contextual](docs/contextual-conversation-qa.md)
+reconhece objetivos independentes sem exigir marcador e retém o pedido antes
+da execução. Escolha na UI entre nova tarefa, mesma tarefa ou cancelar; limpe
+o rascunho com Ctrl-C uma vez e envie o comando exibido. Nova tarefa ganha outro
+UUID/modelo, com uma classificação. Mesma tarefa preserva UUID, contexto e
+escolha manual, sem reclassificar. A TUI reinicia no mesmo terminal.
+
+Sem contexto suficiente ou com intenção ambígua, preserva a tarefa e mostra
+aviso. `Nova tarefa: ...` permanece como escolha explícita. Na nova avaliação
+reservada, reconheceu 16/16 novas tarefas e não propôs troca nas 31 continuações
+ou ambiguidades; a amostra pública pequena não garante compreensão perfeita.
+A implementação #39 está entregue, mas #32/#40 continuam abertas pelo teste
+com Claude real no macOS, indisponível neste momento. Eventos de agentes e
+agendamentos não foram homologados. A tag v1.1.0 não contém esta opção; use o
+checkout `main` e reinstale para experimentá-la.
 
 - No modo padrão, uma nova tarefa gerenciada começa em `ctr new`. Para mudar de assunto com nova classificação, saia do Claude e use esse comando novamente.
 - `/clear`, `/resume` e forks dentro do Claude seguem a semântica nativa e não criam tarefas no roteador. Para continuar uma tarefa gerenciada, use `ctr resume` após sair.

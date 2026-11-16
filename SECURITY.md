@@ -1,7 +1,7 @@
 # Segurança e dados locais
 
 Ferramenta de uso pessoal local, exclusiva para o Claude Code original. Não
-adiciona proxy, servidor, coleta de credenciais ou telemetria. Não use uma
+adiciona proxy de API, servidor de rede, coleta de credenciais ou telemetria. Não use uma
 instalação compartilhada entre usuários do sistema operacional.
 
 O estado deve ficar em um diretório dedicado do próprio usuário: 0700 para
@@ -18,13 +18,21 @@ conteúdo de conversa ou chave de API. Caminhos e hashes ainda são metadados
 potencialmente sensíveis. O Claude mantém histórico e políticas de dados próprios;
 apagar o estado do roteador não apaga o histórico nativo nem dados do provedor.
 
+O modo opt-in `--conversation-routing` usa um socket Unix em diretório privado
+temporário e mantém pedidos, escolhas e palavras de contexto somente em memória.
+Na retomada, pode ler até 1 MiB do começo da transcrição nativa validada para
+reconstituir o objetivo original; esse conteúdo não é copiado para o banco,
+logs ou nova sessão. Falta de histórico implica abstenção. As escolhas usam
+código efêmero, expiram e não são encaminhadas ao modelo. O socket não escuta
+na rede e é removido ao encerrar a execução.
+
 `ctr diagnostics` exporta apenas versões/plataforma, schema e contagens. Não
 exporta tarefas, UUIDs, diretórios, configuração, modelos personalizados,
 transcrições, ambiente, email ou credenciais. `--output arquivo.json` cria um
 arquivo novo 0600 e recusa sobrescrita. `show`/`status` são inspeções locais e
 podem conter metadados privados; revise antes de compartilhar.
 
-O launcher usa argv literal, sem shell para prompts. Hooks silenciosos usam
+O launcher usa argv literal, sem shell para prompts. Hooks de observação usam
 comando com quoting explícito e só observam execução/UUID/diretório conhecidos.
 O prompt inicial é passado em argv ao Claude e pode aparecer na lista de
 processos, conforme as permissões do sistema. `--prompt-file` muda a entrada

@@ -1,5 +1,10 @@
 # Supervisão nativa da conversa — #38/#39
 
+Relatório da primeira implementação, apenas por marcadores. A evolução
+[contextual e a homologação Linux](contextual-conversation-qa.md) entregaram
+#39 e preservam os resultados históricos abaixo, inclusive o recall inicial
+insuficiente. #40 permanece aberta pela homologação nativa macOS.
+
 Verificado em 16/11/2026, Linux x86_64, Python 3.14.3, Claude Code 2.1.325,
 PTY real e autenticação existente. Ferramentas desabilitadas. A
 [ADR revisada](adr/0001-conversation-task-boundaries.md) seleciona esta integração.

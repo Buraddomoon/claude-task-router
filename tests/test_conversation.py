@@ -48,6 +48,8 @@ class ConversationTests(unittest.TestCase):
                      '"New task: build something"', "New task? Maybe later",
                      "Nova tarefa: não inicie nada", "New task: maybe later",
                      "New task: don't start anything", "New task: do not start anything",
+                     "Nova tarefa: continue os testes e talvez faça outro serviço depois",
+                     "New task: continue testing and perhaps build another service later",
                      "Nova tarefa: 'isto é apenas um exemplo'", "New task:"):
             self.assertFalse(boundary(text), text)
 
@@ -79,6 +81,7 @@ class ConversationTests(unittest.TestCase):
                 outcome, reply = request(**changes)
                 self.assertIsNone(outcome)
                 self.assertEqual(reply["action"], "block")
+            self.assertEqual(request(prompt="ctr:new 123abc")[1]["action"], "block")
             self.assertEqual(request()[1]["action"], "continue")
             self.assertEqual(request()[0], Handoff(prompt))
             self.assertEqual(list(Path(gate.directory.name).iterdir()), [Path(gate.path)])

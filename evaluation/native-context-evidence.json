@@ -1,0 +1,447 @@
+{
+  "recorded_on": "2026-11-16",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "python": "3.14.3",
+  "claude_version": "2.1.325",
+  "scope": "contextual native routing Linux; macOS unavailable per user",
+  "classification_inference_calls": 0,
+  "router_added_context_fields": 0,
+  "native_runs": [
+    {
+      "name": "normal",
+      "records": [
+        [
+          {
+            "at": "2026-11-16T13:27:39.904+00:00",
+            "kind": "start",
+            "source_sha256": {
+              "cli.py": "4da06428e8d01f9b818232075846329b53af4746477faf91dbb1c76660ce464b",
+              "launcher.py": "578a3a12eb8ace9da3c879f54dc8f0dc0dd8e12e2028fd4a648ac2b681bf4734",
+              "conversation.py": "2753e7d738332d1f4f83e5149fc793798e25e67df210fbe3c6dc1fb15e562fd8",
+              "conversation_hook.py": "4f6a560b595fd3c429c4b9d9d248e6d31305dc6d9215328053e25c34ed0106f8",
+              "topics.py": "b4009d056ce3c7ebffa81fbe3683faa5a52ae73ac987cf2d963a9ba821b0ab08",
+              "state.py": "9fa045231bfaa165d5eb786aa2612f0dcb3f0fa348265f15096ec8196c31e57f"
+            },
+            "interrupt_handoff": false
+          },
+          {
+            "at": "2026-11-16T13:28:03.780+00:00",
+            "kind": "signal_sent",
+            "signal": 15
+          },
+          {
+            "at": "2026-11-16T13:28:04.789+00:00",
+            "kind": "classification",
+            "count": 1,
+            "model": "sonnet",
+            "tier": "balanced",
+            "duration_ns": 154680
+          },
+          {
+            "at": "2026-11-16T13:30:45.205+00:00",
+            "kind": "signal_sent",
+            "signal": 15
+          },
+          {
+            "at": "2026-11-16T13:31:27.170+00:00",
+            "kind": "exit",
+            "code": 0,
+            "classification_count": 1
+          }
+        ]
+      ],
+      "tasks": [
+        {
+          "id": "f101870e-6804-454a-813d-58287f67f436",
+          "model": "haiku",
+          "initial_model": "haiku",
+          "resolved_model": "claude-haiku-5-5",
+          "effective_model": "claude-haiku-5-5",
+          "launches": 1,
+          "last_exit_code": 0,
+          "choice_revision": 0,
+          "execution_id": "1026c11b-b513-4e23-8c19-b3a442ddb629",
+          "finished_at": "2026-11-16T13:28:04.787388+00:00",
+          "events": [
+            {
+              "at": "2026-11-16T13:27:39.914914+00:00",
+              "kind": "created",
+              "model": "haiku",
+              "source": "manual",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T13:27:47.040138+00:00",
+              "kind": "SessionStart",
+              "model": "claude-haiku-5-5",
+              "source": "startup",
+              "execution_id": "1026c11b-b513-4e23-8c19-b3a442ddb629"
+            },
+            {
+              "at": "2026-11-16T13:28:04.789696+00:00",
+              "kind": "handoff_to",
+              "model": null,
+              "source": "b12d2625-d2e2-4f04-8cd0-c3227f7aab05",
+              "execution_id": "1026c11b-b513-4e23-8c19-b3a442ddb629"
+            }
+          ]
+        },
+        {
+          "id": "b12d2625-d2e2-4f04-8cd0-c3227f7aab05",
+          "model": "haiku",
+          "initial_model": "sonnet",
+          "resolved_model": "claude-haiku-5-5",
+          "effective_model": "claude-haiku-5-5",
+          "launches": 2,
+          "last_exit_code": 0,
+          "choice_revision": 1,
+          "execution_id": "03ac8223-3167-4029-8c5c-2fe9dc2b64a3",
+          "finished_at": "2026-11-16T13:31:27.167898+00:00",
+          "events": [
+            {
+              "at": "2026-11-16T13:28:04.789696+00:00",
+              "kind": "created",
+              "model": "sonnet",
+              "source": "local-rules-v4",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T13:28:04.789696+00:00",
+              "kind": "handoff_from",
+              "model": null,
+              "source": "f101870e-6804-454a-813d-58287f67f436",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T13:28:05.122470+00:00",
+              "kind": "SessionStart",
+              "model": "claude-sonnet-5-5",
+              "source": "startup",
+              "execution_id": "65724637-400b-4841-995e-be766695cfa0"
+            },
+            {
+              "at": "2026-11-16T13:29:29.739582+00:00",
+              "kind": "PostModelSwitch",
+              "model": "claude-haiku-5-5",
+              "source": "picker",
+              "execution_id": "65724637-400b-4841-995e-be766695cfa0"
+            },
+            {
+              "at": "2026-11-16T13:30:46.806455+00:00",
+              "kind": "SessionStart",
+              "model": null,
+              "source": "resume",
+              "execution_id": "03ac8223-3167-4029-8c5c-2fe9dc2b64a3"
+            },
+            {
+              "at": "2026-11-16T13:31:27.169814+00:00",
+              "kind": "model_resolved",
+              "model": "claude-haiku-5-5",
+              "source": "transcript_tail",
+              "execution_id": "03ac8223-3167-4029-8c5c-2fe9dc2b64a3"
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "session_id": "f101870e-6804-454a-813d-58287f67f436",
+          "model": "claude-haiku-5-5",
+          "at": "2026-11-16T13:27:48.739Z",
+          "stop_reason": "end_turn",
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 147,
+            "cache_creation_input_tokens": 3230,
+            "cache_read_input_tokens": 645
+          }
+        },
+        {
+          "session_id": "b12d2625-d2e2-4f04-8cd0-c3227f7aab05",
+          "model": "claude-sonnet-5-5",
+          "at": "2026-11-16T13:28:47.229Z",
+          "stop_reason": null,
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 7,
+            "cache_creation_input_tokens": 2418,
+            "cache_read_input_tokens": 645
+          }
+        },
+        {
+          "session_id": "b12d2625-d2e2-4f04-8cd0-c3227f7aab05",
+          "model": "claude-haiku-5-5",
+          "at": "2026-11-16T13:30:47.904Z",
+          "stop_reason": "end_turn",
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 5,
+            "cache_creation_input_tokens": 3206,
+            "cache_read_input_tokens": 645
+          }
+        }
+      ],
+      "api_errors": [],
+      "locks_released": true,
+      "user_control_messages": 0,
+      "sqlite_integrity": "ok"
+    },
+    {
+      "name": "model_error",
+      "records": [
+        [
+          {
+            "at": "2026-11-16T13:31:27.610+00:00",
+            "kind": "start",
+            "source_sha256": {
+              "cli.py": "4da06428e8d01f9b818232075846329b53af4746477faf91dbb1c76660ce464b",
+              "launcher.py": "578a3a12eb8ace9da3c879f54dc8f0dc0dd8e12e2028fd4a648ac2b681bf4734",
+              "conversation.py": "651b407f58a0f4e69e6145b3675ac939df2b598b62a0eea82aae77f5ec9a744e",
+              "conversation_hook.py": "4f6a560b595fd3c429c4b9d9d248e6d31305dc6d9215328053e25c34ed0106f8",
+              "topics.py": "b4009d056ce3c7ebffa81fbe3683faa5a52ae73ac987cf2d963a9ba821b0ab08",
+              "state.py": "9fa045231bfaa165d5eb786aa2612f0dcb3f0fa348265f15096ec8196c31e57f"
+            },
+            "interrupt_handoff": false
+          },
+          {
+            "at": "2026-11-16T13:31:44.350+00:00",
+            "kind": "signal_sent",
+            "signal": 15
+          },
+          {
+            "at": "2026-11-16T13:31:45.336+00:00",
+            "kind": "classification",
+            "count": 1,
+            "model": "ctr-invalid-native-test-20261116",
+            "tier": "balanced",
+            "duration_ns": 62440
+          },
+          {
+            "at": "2026-11-16T13:32:10.346+00:00",
+            "kind": "exit",
+            "code": 0,
+            "classification_count": 1
+          }
+        ]
+      ],
+      "tasks": [
+        {
+          "id": "4a54fceb-ae20-445e-8545-155f2f6ca40b",
+          "model": "haiku",
+          "initial_model": "haiku",
+          "resolved_model": "claude-haiku-5-5",
+          "effective_model": "claude-haiku-5-5",
+          "launches": 1,
+          "last_exit_code": 0,
+          "choice_revision": 0,
+          "execution_id": "e71434d4-36e6-456a-a173-d20fd2794a97",
+          "finished_at": "2026-11-16T13:31:45.335471+00:00",
+          "events": [
+            {
+              "at": "2026-11-16T13:31:27.620059+00:00",
+              "kind": "created",
+              "model": "haiku",
+              "source": "manual",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T13:31:27.930285+00:00",
+              "kind": "SessionStart",
+              "model": "claude-haiku-5-5",
+              "source": "startup",
+              "execution_id": "e71434d4-36e6-456a-a173-d20fd2794a97"
+            },
+            {
+              "at": "2026-11-16T13:31:45.336441+00:00",
+              "kind": "handoff_to",
+              "model": null,
+              "source": "2e1fd768-4585-49ee-94b0-8de24ff1af28",
+              "execution_id": "e71434d4-36e6-456a-a173-d20fd2794a97"
+            }
+          ]
+        },
+        {
+          "id": "2e1fd768-4585-49ee-94b0-8de24ff1af28",
+          "model": "ctr-invalid-native-test-20261116",
+          "initial_model": "ctr-invalid-native-test-20261116",
+          "resolved_model": "ctr-invalid-native-test-20261116",
+          "effective_model": "ctr-invalid-native-test-20261116",
+          "launches": 1,
+          "last_exit_code": 0,
+          "choice_revision": 0,
+          "execution_id": "0be7797d-2b6a-4ef2-b5f9-9c66fb94b4c0",
+          "finished_at": "2026-11-16T13:32:10.345644+00:00",
+          "events": [
+            {
+              "at": "2026-11-16T13:31:45.336441+00:00",
+              "kind": "created",
+              "model": "ctr-invalid-native-test-20261116",
+              "source": "local-rules-v4",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T13:31:45.336441+00:00",
+              "kind": "handoff_from",
+              "model": null,
+              "source": "4a54fceb-ae20-445e-8545-155f2f6ca40b",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T13:31:45.657078+00:00",
+              "kind": "SessionStart",
+              "model": "ctr-invalid-native-test-20261116",
+              "source": "startup",
+              "execution_id": "0be7797d-2b6a-4ef2-b5f9-9c66fb94b4c0"
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "session_id": "4a54fceb-ae20-445e-8545-155f2f6ca40b",
+          "model": "claude-haiku-5-5",
+          "at": "2026-11-16T13:31:29.091Z",
+          "stop_reason": "end_turn",
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 3,
+            "cache_creation_input_tokens": 836,
+            "cache_read_input_tokens": 3036
+          }
+        }
+      ],
+      "api_errors": [
+        {
+          "session_id": "2e1fd768-4585-49ee-94b0-8de24ff1af28",
+          "error": "model_not_found",
+          "at": "2026-11-16T13:31:46.621Z"
+        }
+      ],
+      "locks_released": true,
+      "user_control_messages": 0,
+      "sqlite_integrity": "ok"
+    },
+    {
+      "name": "interruption_and_resume",
+      "records": [
+        [
+          {
+            "at": "2026-11-16T13:32:10.746+00:00",
+            "kind": "start",
+            "source_sha256": {
+              "cli.py": "4da06428e8d01f9b818232075846329b53af4746477faf91dbb1c76660ce464b",
+              "launcher.py": "578a3a12eb8ace9da3c879f54dc8f0dc0dd8e12e2028fd4a648ac2b681bf4734",
+              "conversation.py": "651b407f58a0f4e69e6145b3675ac939df2b598b62a0eea82aae77f5ec9a744e",
+              "conversation_hook.py": "4f6a560b595fd3c429c4b9d9d248e6d31305dc6d9215328053e25c34ed0106f8",
+              "topics.py": "b4009d056ce3c7ebffa81fbe3683faa5a52ae73ac987cf2d963a9ba821b0ab08",
+              "state.py": "9fa045231bfaa165d5eb786aa2612f0dcb3f0fa348265f15096ec8196c31e57f"
+            },
+            "interrupt_handoff": true
+          },
+          {
+            "at": "2026-11-16T13:32:28.391+00:00",
+            "kind": "signal_sent",
+            "signal": 15
+          },
+          {
+            "at": "2026-11-16T13:32:28.391+00:00",
+            "kind": "injected_sigint"
+          },
+          {
+            "at": "2026-11-16T13:32:29.328+00:00",
+            "kind": "exit",
+            "code": 143,
+            "classification_count": 0
+          }
+        ],
+        [
+          {
+            "at": "2026-11-16T13:32:58.128+00:00",
+            "kind": "start",
+            "source_sha256": {
+              "cli.py": "4da06428e8d01f9b818232075846329b53af4746477faf91dbb1c76660ce464b",
+              "launcher.py": "578a3a12eb8ace9da3c879f54dc8f0dc0dd8e12e2028fd4a648ac2b681bf4734",
+              "conversation.py": "651b407f58a0f4e69e6145b3675ac939df2b598b62a0eea82aae77f5ec9a744e",
+              "conversation_hook.py": "4f6a560b595fd3c429c4b9d9d248e6d31305dc6d9215328053e25c34ed0106f8",
+              "topics.py": "b4009d056ce3c7ebffa81fbe3683faa5a52ae73ac987cf2d963a9ba821b0ab08",
+              "state.py": "9fa045231bfaa165d5eb786aa2612f0dcb3f0fa348265f15096ec8196c31e57f"
+            },
+            "interrupt_handoff": false
+          },
+          {
+            "at": "2026-11-16T13:33:15.658+00:00",
+            "kind": "exit",
+            "code": 0,
+            "classification_count": 0
+          }
+        ]
+      ],
+      "tasks": [
+        {
+          "id": "ba548736-6282-45ef-a6e4-c0c9482135b1",
+          "model": "haiku",
+          "initial_model": "haiku",
+          "resolved_model": "claude-haiku-5-5",
+          "effective_model": null,
+          "launches": 2,
+          "last_exit_code": 0,
+          "choice_revision": 0,
+          "execution_id": "be4fbdd1-ba81-4dd0-87cb-fdea762b9e89",
+          "finished_at": "2026-11-16T13:33:15.656509+00:00",
+          "events": [
+            {
+              "at": "2026-11-16T13:32:10.756795+00:00",
+              "kind": "created",
+              "model": "haiku",
+              "source": "manual",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T13:32:11.056078+00:00",
+              "kind": "SessionStart",
+              "model": "claude-haiku-5-5",
+              "source": "startup",
+              "execution_id": "f8688589-9b1c-414a-addd-14e051802a6f"
+            },
+            {
+              "at": "2026-11-16T13:32:58.470854+00:00",
+              "kind": "SessionStart",
+              "model": null,
+              "source": "resume",
+              "execution_id": "be4fbdd1-ba81-4dd0-87cb-fdea762b9e89"
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "session_id": "ba548736-6282-45ef-a6e4-c0c9482135b1",
+          "model": "claude-haiku-5-5",
+          "at": "2026-11-16T13:32:12.180Z",
+          "stop_reason": "end_turn",
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 3,
+            "cache_creation_input_tokens": 635,
+            "cache_read_input_tokens": 3236
+          }
+        }
+      ],
+      "api_errors": [],
+      "locks_released": true,
+      "user_control_messages": 0,
+      "sqlite_integrity": "ok"
+    }
+  ],
+  "os_release": {
+    "kernel": "6.19.10-300.fc44.x86_64",
+    "distribution": "Fedora Linux 44 (KDE Plasma Desktop Edition)"
+  },
+  "refinements_after_normal_run": "The normal run exposed Ctrl-U clearing only the current line of a multiline draft. UI now says Ctrl-C once; error and resume runs exercised that correction. Later unit-tested controls preserve the initial exemption across stale control inputs and abstain on uncertain compound markers; no reserved-case recalibration."
+}
