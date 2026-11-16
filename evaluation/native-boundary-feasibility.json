@@ -1,0 +1,147 @@
+{
+  "issue": 38,
+  "parent_issue": 32,
+  "recorded_at": "2026-11-16T12:25:18+00:00",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "python": "3.14.3",
+  "claude_version": "2.1.325 (Claude Code)",
+  "probe_hook_sha256": "d68aae43d401820cef162ffe99cf7505f5bf08cbcaad447af0e07c9af3f75f51",
+  "scope": "native-interface-feasibility; not feature E2E",
+  "tools": [],
+  "router_classifications": 0,
+  "routing_context_characters": 0,
+  "native_exit_code": 0,
+  "events": [
+    {
+      "hook_event_name": "SessionStart",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "source": "startup",
+      "model": "claude-haiku-5-5",
+      "at": "2026-11-16T12:23:09.523+00:00"
+    },
+    {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "case": "block",
+      "at": "2026-11-16T12:23:18.399+00:00"
+    },
+    {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "case": "initial",
+      "at": "2026-11-16T12:23:25.628+00:00"
+    },
+    {
+      "hook_event_name": "Stop",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "at": "2026-11-16T12:23:26.557+00:00"
+    },
+    {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "case": "continuation",
+      "at": "2026-11-16T12:23:33.174+00:00"
+    },
+    {
+      "hook_event_name": "Stop",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "at": "2026-11-16T12:23:34.419+00:00"
+    },
+    {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "case": "topic_change",
+      "at": "2026-11-16T12:23:42.175+00:00"
+    },
+    {
+      "hook_event_name": "Stop",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "at": "2026-11-16T12:23:42.997+00:00"
+    },
+    {
+      "hook_event_name": "PreModelSwitch",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "source": "picker",
+      "from_model": "claude-haiku-5-5",
+      "to_model": "claude-sonnet-5-5",
+      "requested_model": "sonnet",
+      "at": "2026-11-16T12:23:57.405+00:00"
+    },
+    {
+      "hook_event_name": "PostModelSwitch",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "source": "picker",
+      "from_model": "claude-haiku-5-5",
+      "to_model": "claude-sonnet-5-5",
+      "requested_model": "sonnet",
+      "at": "2026-11-16T12:24:02.687+00:00"
+    },
+    {
+      "hook_event_name": "SessionEnd",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "at": "2026-11-16T12:24:08.169+00:00"
+    },
+    {
+      "hook_event_name": "SessionStart",
+      "session_id": "c502e0e0-087c-4f6f-bd81-ae28f52ef21e",
+      "source": "clear",
+      "at": "2026-11-16T12:24:08.207+00:00"
+    },
+    {
+      "hook_event_name": "SessionEnd",
+      "session_id": "c502e0e0-087c-4f6f-bd81-ae28f52ef21e",
+      "at": "2026-11-16T12:24:17.242+00:00"
+    },
+    {
+      "hook_event_name": "SessionStart",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "source": "resume",
+      "model": "claude-sonnet-5-5",
+      "at": "2026-11-16T12:24:17.268+00:00"
+    },
+    {
+      "hook_event_name": "SessionEnd",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "at": "2026-11-16T12:24:25.070+00:00"
+    }
+  ],
+  "assistant_messages": [
+    {
+      "at": "2026-11-16T12:23:26.520Z",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "model": "claude-haiku-5-5",
+      "tokens": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 2512,
+        "cache_read_input_tokens": 645,
+        "output_tokens": 4
+      },
+      "tool_use_blocks": 0
+    },
+    {
+      "at": "2026-11-16T12:23:34.377Z",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "model": "claude-haiku-5-5",
+      "tokens": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 664,
+        "cache_read_input_tokens": 2534,
+        "output_tokens": 4
+      },
+      "tool_use_blocks": 0
+    },
+    {
+      "at": "2026-11-16T12:23:42.961Z",
+      "session_id": "854ed623-b53b-4b57-b01a-4ab0db95e339",
+      "model": "claude-haiku-5-5",
+      "tokens": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 81,
+        "cache_read_input_tokens": 3173,
+        "output_tokens": 3
+      },
+      "tool_use_blocks": 0
+    }
+  ]
+}

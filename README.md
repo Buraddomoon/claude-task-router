@@ -110,6 +110,12 @@ O launcher passa `switchModelsOnFlag: false` nos settings da execução: o contr
 
 ## Fronteira da tarefa e limites
 
+A troca automática de assunto dentro da conversa (#32) foi investigada na
+[ADR de viabilidade](docs/adr/0001-conversation-task-boundaries.md), com
+[prova nativa](docs/native-boundary-feasibility.md). A implementação está
+bloqueada pela ausência de controle público demonstrado para coordenar modelo
+e nova sessão antes da execução; essa capacidade continua pendente.
+
 - Uma nova tarefa gerenciada começa em `ctr new`. Para mudar de assunto com nova classificação, saia do Claude e use esse comando novamente.
 - `/clear`, `/resume` e forks dentro do Claude seguem a semântica nativa e não criam tarefas no roteador. Para continuar uma tarefa gerenciada, use `ctr resume` após sair.
 - O launcher não reclassifica mensagens, não faz escalonamento no meio da tarefa e não configura fallback. O Claude/provedor ainda pode fazer substituições internas, inclusive em plan mode com Haiku. Para uma execução estritamente fixa, revise essas políticas nativas no seu ambiente.

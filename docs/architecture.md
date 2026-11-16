@@ -1,5 +1,11 @@
 # Arquitetura e pesquisa
 
+Atualização de viabilidade em 16/11/2026: a
+[ADR 0001](adr/0001-conversation-task-boundaries.md) e a
+[prova em Claude Code 2.1.325](native-boundary-feasibility.md) investigam #32/#38.
+Não foi demonstrado controle público para trocar automaticamente tarefa,
+sessão e modelo dentro da TUI. #39 permanece bloqueada; #32 não está entregue.
+
 Consulta: 13/11/2026. Ambiente observado: Claude Code 2.1.323, Codex CLI 0.167.2. Documentação e disponibilidade podem mudar; `ctr doctor` verifica a interface instalada sem inferência.
 
 ## Decisão
