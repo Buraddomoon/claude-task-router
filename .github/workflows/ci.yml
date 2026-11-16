@@ -40,6 +40,7 @@ jobs:
           python evaluation/real.py > real-evaluation-plan.json
           python evaluation/real.py --prospective > prospective-evaluation-plan.json
           python evaluation/real.py --smoke > accounting-smoke-plan.json
+          python evaluation/efficiency_audit.py --check evaluation/efficiency-audit-v1.json
       - name: Fixed evaluation corpus and latency gates
         run: python evaluation/run.py --output evaluation-ci.json
       - name: Contextual conversation boundaries and reserved corpus

@@ -150,3 +150,58 @@ O relatório mostra totais conhecidos (inclusive falhas), completude,
 subtotais new/resume, métricas separadas e conclusão da amostra. Valores
 ausentes não viram zero. Uma redução observada na amostra nunca altera
 `general_savings_proven=false` nem comprova economia na fatura/quota.
+
+## Investigação dos tokens da v4 — #37
+
+Reanálise offline reproduzível, sem chamadas de IA e sem mudar a política:
+
+```bash
+python3 evaluation/efficiency_audit.py
+python3 evaluation/efficiency_audit.py --check evaluation/efficiency-audit-v1.json
+```
+
+O [artefato sanitizado](../evaluation/efficiency-audit-v1.json) identifica por
+hash os três relatórios anteriores e preserva inclusive a tentativa parcial.
+As 66 chamadas históricas com medição somam US$ 0,07725063 estimados; o smoke
+novo fica separado e não é incorporado como ensaio de economia.
+
+| Componente v4 | Baseline | Roteado | Diferença roteado − baseline |
+| --- | --- | --- | --- |
+| Entrada nova | 24 | 24 | 0 |
+| Escrita de cache | 2.058 | 1.431 | −627 |
+| Leitura de cache | 22.638 | 28.353 | +5.715 |
+| Saída | 260 | 260 | 0 |
+| Total | 24.980 | 30.068 | **+5.088** |
+
+A decomposição fecha exatamente o aumento de 20,37% observado. Não houve
+aumento agregado de saída ou de entrada nova nesses contadores. A diferença
+fica na contabilização de cache, apesar do custo estimado menor. Isso não
+identifica por que os contextos/cache diferiram: versão por chamada,
+aquecimento, estado do provedor e overhead local não foram instrumentados
+na coleta histórica. Não reconstruir essas medições retroativamente.
+Não há continuações no ensaio histórico, portanto seu custo marginal de
+resume permanece não medido. O novo smoke valida a fórmula, sem preencher
+essa lacuna da v4.
+
+Com esses dados, não foi demonstrado contexto descartável nem regra de
+classificação defeituosa que explique o aumento. Nenhum corte de contexto,
+nova inferência de classificação ou ajuste de tiers foi realizado.
+Os resultados negativos da v3, os tokens desfavoráveis da v4 e os custos da
+tentativa parcial continuam públicos. A #37 permanece pendente de tarefas
+reais reservadas e revisão humana; a restrição atual a testes simples não
+permite encerrar essa entrega como economia comprovada.
+
+## Verificações desta entrega
+
+A suíte cobre deltas cumulativos por modelo, cache, histórico de modelo
+inativo, resets, medições ausentes, deriva de versão/modelo, spawn, timeout,
+interrupção, integridade dos locks e proteção de dados privados. O ciclo
+completo de oito tarefas e 32 chamadas é exercitado somente com cliente
+simulado, em repositórios temporários; não é dado de avaliação real.
+Os verificadores de qualidade impedem conclusão favorável sem revisão
+humana ou com regressão crítica e mantêm custo/tokens/tempo separados.
+Os testes e os três planos padrão não fazem inferência.
+
+Validação local final: `python3 -m unittest discover -s tests -v` —
+**118 testes aprovados** em Linux/Python 3.14.3. Os três dry-runs, a checagem
+reproduzível do artefato histórico e `git diff --check` também passaram.

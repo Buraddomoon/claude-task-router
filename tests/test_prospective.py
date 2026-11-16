@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 from evaluation.measurements import marginal, provenance, snapshot, stable
-from evaluation.prospective import PROTOCOL, call, digest, freeze, main, summarize
+from evaluation.prospective import PROTOCOL, call, digest, freeze, main, run, summarize
 from evaluation.real import ROOT, execute
 from evaluation.smoke import main as smoke_main
 
@@ -35,6 +35,33 @@ def cohort():
                              total_tokens=100 if arm == "baseline" else 80,
                              duration_seconds=2 if arm == "baseline" else 1))
     return dict(records=rows, planned_calls=4, lock=dict(tasks=[dict(id="T01")]))
+
+
+def private_manifest(root):
+    projects = []
+    for index in range(2):
+        project = root / f"private-project-{index}"
+        project.mkdir()
+        subprocess.run(["git", "init", "-q", str(project)], check=True)
+        (project / "example.txt").write_text("private code")
+        subprocess.run(["git", "-C", str(project), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(project), "-c", "user.name=Test", "-c", "user.email=test@example.org",
+                        "commit", "-qm", "snapshot"], check=True)
+        commit = subprocess.check_output(["git", "-C", str(project), "rev-parse", "HEAD"], text=True).strip()
+        projects.append((project, commit))
+    tasks = []
+    for index, category in enumerate(("fix", "feature", "refactor", "investigation") * 2):
+        prompts = []
+        for turn in (1, 2):
+            path = root / f"private-{index}-{turn}.txt"
+            path.write_bytes(f"private request {index} / {turn}\r\n".encode())
+            prompts.append(str(path))
+        project, commit = projects[index % 2]
+        tasks.append(dict(id=f"T{index+1:02}", category=category, project=str(project), commit=commit,
+                          prompts=prompts, acceptance=[[sys.executable, "-c", "pass"]] * 2))
+    manifest = root / "private.json"
+    manifest.write_text(json.dumps(dict(authorized=True, not_used_for_calibration=True, tasks=tasks)))
+    return manifest, tasks
 
 
 class MeasurementTests(unittest.TestCase):
@@ -221,29 +248,7 @@ class ProspectiveTests(unittest.TestCase):
     def test_freeze_is_sanitized_and_binds_private_prompts_commits_and_commands(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            projects = []
-            for index in range(2):
-                project = root / f"private-project-{index}"
-                project.mkdir()
-                subprocess.run(["git", "init", "-q", str(project)], check=True)
-                (project / "example.txt").write_text("private code")
-                subprocess.run(["git", "-C", str(project), "add", "."], check=True)
-                subprocess.run(["git", "-C", str(project), "-c", "user.name=Test", "-c", "user.email=test@example.org",
-                                "commit", "-qm", "snapshot"], check=True)
-                commit = subprocess.check_output(["git", "-C", str(project), "rev-parse", "HEAD"], text=True).strip()
-                projects.append((project, commit))
-            tasks = []
-            for index, category in enumerate(("fix", "feature", "refactor", "investigation") * 2):
-                prompts = []
-                for turn in (1, 2):
-                    path = root / f"private-{index}-{turn}.txt"
-                    path.write_text(f"private request {index} / {turn}")
-                    prompts.append(str(path))
-                project, commit = projects[index % 2]
-                tasks.append(dict(id=f"T{index+1:02}", category=category, project=str(project), commit=commit,
-                                  prompts=prompts, acceptance=[["python3", "private-check.py"]] * 2))
-            manifest = root / "private.json"
-            manifest.write_text(json.dumps(dict(authorized=True, not_used_for_calibration=True, tasks=tasks)))
+            manifest, tasks = private_manifest(root)
             protocol = json.loads(PROTOCOL.read_bytes())
             first = freeze(manifest, protocol)
             self.assertNotIn("private", json.dumps(first))
@@ -253,6 +258,35 @@ class ProspectiveTests(unittest.TestCase):
             Path(tasks[0]["prompts"][0]).write_text(json.loads((ROOT / "evaluation/real-cases.json").read_bytes())[0]["prompt"])
             with self.assertRaises(ValueError):
                 freeze(manifest, protocol)
+
+    def test_whole_cohort_with_fake_native_preserves_pairs_and_waits_for_human_review(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest, tasks = private_manifest(root)
+            binary = root / "fake-native"
+            binary.write_text("#!/usr/bin/env python3\nimport json,sys\n" +
+                "if sys.argv[1:] == ['--version']:\n print('2.1.325 (Claude Code)'); raise SystemExit(0)\n" +
+                "a=sys.argv; n=2 if '--resume' in a else 1\n" +
+                "session=a[a.index('--resume' if n==2 else '--session-id')+1]\n" +
+                "m=a[a.index('--model')+1]; m=m if m.startswith('claude-') else 'claude-'+m+'-test-001'\n" +
+                "print(json.dumps(dict(session_id=session,subtype='success',total_cost_usd=.001*n,result='OK',modelUsage={m:dict(inputTokens=10*n,outputTokens=2*n,cacheCreationInputTokens=5*n,cacheReadInputTokens=20*n)})))\n")
+            binary.chmod(0o700)
+            protocol = json.loads(PROTOCOL.read_bytes())
+            lock = freeze(manifest, protocol)
+            output = root / "result.json"
+            report = run(manifest, lock, protocol, str(binary), output, root / "runs")
+            self.assertIsNone(report["stopped"], report)
+            self.assertEqual(len(report["records"]), 32)
+            self.assertTrue(report["summary"]["comparable"], report)
+            self.assertEqual(report["summary"]["verdict"], "inconclusive")
+            self.assertFalse(report["summary"]["human_review_passed"])
+            self.assertAlmostEqual(sum(r["cli_estimated_cost_usd"] for r in report["records"]), .032)
+            routed = [r for r in report["records"] if r["arm"] == "routed"]
+            self.assertEqual(sum(r["router_observation"]["classifications"] for r in routed), 8)
+            self.assertEqual([r["arm"] for r in report["records"][:8]],
+                             ["baseline", "baseline", "routed", "routed", "routed", "routed", "baseline", "baseline"])
+            self.assertNotIn("private request", output.read_text())
+            self.assertEqual(Path(tasks[0]["project"], "example.txt").read_text(), "private code")
 
 
 if __name__ == "__main__":

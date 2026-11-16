@@ -69,3 +69,11 @@ orçamento estimado e tempo, mantém falhas e para se não puder medir custo.
 Não é executada automaticamente pela CI. Para trabalho onde qualidade tenha
 prioridade sobre economia, configure `ctr setup --force --min-tier balanced`
 ou faça override. Não é necessário classificar novamente cada continuação.
+
+## Seguimento da #31
+
+O [relatório prospectivo](prospective-evaluation.md) registra o protocolo,
+a instrumentação de deltas em retomadas, o smoke nativo de baixo custo e
+a decomposição reproduzível dos 5.088 tokens extras da v4. A coorte real
+diversa e a revisão humana continuam pendentes; os limites e resultados
+históricos acima permanecem válidos.

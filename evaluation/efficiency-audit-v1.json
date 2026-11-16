@@ -1,0 +1,326 @@
+{
+  "protocol": "historical-audit-v1",
+  "inference_calls": 0,
+  "datasets": [
+    {
+      "artifact": "real-results-v3.json",
+      "sha256": "8fa86a596abd8bd8f9f310a4f1271cbee5d7a2cfaeaa191333b6847961e1a08c",
+      "policy": "local-rules-v3",
+      "planned_calls": 24,
+      "stopped": null,
+      "arms": {
+        "baseline": {
+          "calls": 12,
+          "execution_failures": 0,
+          "quality_passed": 12,
+          "cost_usd": {
+            "known": 0.017908399999999998,
+            "complete": true,
+            "total": 0.017908399999999998
+          },
+          "seconds": {
+            "known": 31.9449,
+            "complete": true,
+            "total": 31.9449
+          },
+          "total_tokens": {
+            "known": 24968,
+            "complete": true,
+            "total": 24968
+          },
+          "tokens": {
+            "input_tokens": {
+              "known": 24,
+              "complete": true,
+              "total": 24
+            },
+            "cache_creation_input_tokens": {
+              "known": 3280,
+              "complete": true,
+              "total": 3280
+            },
+            "cache_read_input_tokens": {
+              "known": 21404,
+              "complete": true,
+              "total": 21404
+            },
+            "output_tokens": {
+              "known": 260,
+              "complete": true,
+              "total": 260
+            }
+          }
+        },
+        "routed": {
+          "calls": 12,
+          "execution_failures": 0,
+          "quality_passed": 12,
+          "cost_usd": {
+            "known": 0.02230266,
+            "complete": true,
+            "total": 0.02230266
+          },
+          "seconds": {
+            "known": 34.153999999999996,
+            "complete": true,
+            "total": 34.153999999999996
+          },
+          "total_tokens": {
+            "known": 26760,
+            "complete": true,
+            "total": 26760
+          },
+          "tokens": {
+            "input_tokens": {
+              "known": 24,
+              "complete": true,
+              "total": 24
+            },
+            "cache_creation_input_tokens": {
+              "known": 4911,
+              "complete": true,
+              "total": 4911
+            },
+            "cache_read_input_tokens": {
+              "known": 21565,
+              "complete": true,
+              "total": 21565
+            },
+            "output_tokens": {
+              "known": 260,
+              "complete": true,
+              "total": 260
+            }
+          }
+        }
+      },
+      "routed_minus_baseline_tokens": {
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 1631,
+        "cache_read_input_tokens": 161,
+        "output_tokens": 0
+      },
+      "native_router_overhead_seconds": null,
+      "resumed_marginal_cost_usd": null,
+      "version_verified_per_call": false,
+      "causal_cache_attribution_verified": false,
+      "api_invoice_usd": null,
+      "subscription_quota": null
+    },
+    {
+      "artifact": "real-results-v4.json",
+      "sha256": "d4ecd67c463d8f22d939a51f01266a699e4352b7777ed0f10a389b1a3b43fe07",
+      "policy": "local-rules-v4",
+      "planned_calls": 24,
+      "stopped": null,
+      "arms": {
+        "baseline": {
+          "calls": 12,
+          "execution_failures": 0,
+          "quality_passed": 12,
+          "cost_usd": {
+            "known": 0.013143799999999999,
+            "complete": true,
+            "total": 0.013143799999999999
+          },
+          "seconds": {
+            "known": 35.0266,
+            "complete": true,
+            "total": 35.0266
+          },
+          "total_tokens": {
+            "known": 24980,
+            "complete": true,
+            "total": 24980
+          },
+          "tokens": {
+            "input_tokens": {
+              "known": 24,
+              "complete": true,
+              "total": 24
+            },
+            "cache_creation_input_tokens": {
+              "known": 2058,
+              "complete": true,
+              "total": 2058
+            },
+            "cache_read_input_tokens": {
+              "known": 22638,
+              "complete": true,
+              "total": 22638
+            },
+            "output_tokens": {
+              "known": 260,
+              "complete": true,
+              "total": 260
+            }
+          }
+        },
+        "routed": {
+          "calls": 12,
+          "execution_failures": 0,
+          "quality_passed": 12,
+          "cost_usd": {
+            "known": 0.0066763,
+            "complete": true,
+            "total": 0.0066763
+          },
+          "seconds": {
+            "known": 30.6489,
+            "complete": true,
+            "total": 30.6489
+          },
+          "total_tokens": {
+            "known": 30068,
+            "complete": true,
+            "total": 30068
+          },
+          "tokens": {
+            "input_tokens": {
+              "known": 24,
+              "complete": true,
+              "total": 24
+            },
+            "cache_creation_input_tokens": {
+              "known": 1431,
+              "complete": true,
+              "total": 1431
+            },
+            "cache_read_input_tokens": {
+              "known": 28353,
+              "complete": true,
+              "total": 28353
+            },
+            "output_tokens": {
+              "known": 260,
+              "complete": true,
+              "total": 260
+            }
+          }
+        }
+      },
+      "routed_minus_baseline_tokens": {
+        "input_tokens": 0,
+        "cache_creation_input_tokens": -627,
+        "cache_read_input_tokens": 5715,
+        "output_tokens": 0
+      },
+      "native_router_overhead_seconds": null,
+      "resumed_marginal_cost_usd": null,
+      "version_verified_per_call": false,
+      "causal_cache_attribution_verified": false,
+      "api_invoice_usd": null,
+      "subscription_quota": null
+    },
+    {
+      "artifact": "real-results-v4-interrupted.json",
+      "sha256": "e62afba8af010e646afb7fd0a23bab436d585f432cb1237e4b72ea5d2a5c96fc",
+      "policy": "local-rules-v4",
+      "planned_calls": 24,
+      "stopped": null,
+      "arms": {
+        "baseline": {
+          "calls": 9,
+          "execution_failures": 0,
+          "quality_passed": 9,
+          "cost_usd": {
+            "known": 0.0118187,
+            "complete": true,
+            "total": 0.0118187
+          },
+          "seconds": {
+            "known": 29.4648,
+            "complete": true,
+            "total": 29.4648
+          },
+          "total_tokens": {
+            "known": 18647,
+            "complete": true,
+            "total": 18647
+          },
+          "tokens": {
+            "input_tokens": {
+              "known": 18,
+              "complete": true,
+              "total": 18
+            },
+            "cache_creation_input_tokens": {
+              "known": 2046,
+              "complete": true,
+              "total": 2046
+            },
+            "cache_read_input_tokens": {
+              "known": 16387,
+              "complete": true,
+              "total": 16387
+            },
+            "output_tokens": {
+              "known": 196,
+              "complete": true,
+              "total": 196
+            }
+          }
+        },
+        "routed": {
+          "calls": 9,
+          "execution_failures": 0,
+          "quality_passed": 9,
+          "cost_usd": {
+            "known": 0.00540077,
+            "complete": true,
+            "total": 0.00540077
+          },
+          "seconds": {
+            "known": 24.728099999999998,
+            "complete": true,
+            "total": 24.728099999999998
+          },
+          "total_tokens": {
+            "known": 22839,
+            "complete": true,
+            "total": 22839
+          },
+          "tokens": {
+            "input_tokens": {
+              "known": 18,
+              "complete": true,
+              "total": 18
+            },
+            "cache_creation_input_tokens": {
+              "known": 1902,
+              "complete": true,
+              "total": 1902
+            },
+            "cache_read_input_tokens": {
+              "known": 20723,
+              "complete": true,
+              "total": 20723
+            },
+            "output_tokens": {
+              "known": 196,
+              "complete": true,
+              "total": 196
+            }
+          }
+        }
+      },
+      "routed_minus_baseline_tokens": {
+        "input_tokens": 0,
+        "cache_creation_input_tokens": -144,
+        "cache_read_input_tokens": 4336,
+        "output_tokens": 0
+      },
+      "native_router_overhead_seconds": null,
+      "resumed_marginal_cost_usd": null,
+      "version_verified_per_call": false,
+      "causal_cache_attribution_verified": false,
+      "api_invoice_usd": null,
+      "subscription_quota": null
+    }
+  ],
+  "known_historical_cost_usd": 0.07725063,
+  "prospective_evaluation_status": "pending_authorized_real_tasks_and_human_review",
+  "token_reduction_proven": false,
+  "general_savings_proven": false,
+  "policy_changed": false
+}
