@@ -1,11 +1,23 @@
 import unittest
 from unittest.mock import patch
 
-from claude_task_router.classifier import classify
+from claude_task_router.classifier import classify, normalize
 from claude_task_router.config import Config, validate_model
 
 
 class ClassifierTests(unittest.TestCase):
+    def test_normalization_preserves_ascii_accents_and_unicode_semantics(self):
+        for original, expected in (("HELLO_WORLD\t42\n", "hello_world\t42\n"),
+                                   ("AUTENTICAÇÃO e MIGRAÇÃO", "autenticacao e migracao"),
+                                   ("e\u0301", "e"), ("İ K Straße", "i k straße")):
+            self.assertEqual(normalize(original), expected)
+
+    def test_path_scan_optimization_keeps_risk_words_in_references_masked(self):
+        for suffix in ("py", "js", "jsx", "ts", "tsx", "go", "rs", "md", "json", "yaml"):
+            self.assertEqual(classify("Rename authentication." + suffix).tier, "economy", suffix)
+        self.assertEqual(classify("Rename src/autenticação.backup").tier, "economy")
+        self.assertEqual(classify("Rename authentication.unknown").tier, "advanced")
+
     def test_examples(self):
         cases = [
             ("Corrija o typo no README.md", "economy"),

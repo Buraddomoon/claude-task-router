@@ -3,7 +3,8 @@
   "corpus_sha256": "42bb4112b4ddc745f750b03ed674a8ed65bbaa2c86df1496626ca4190b334228",
   "detector_sha256": {
     "conversation.py": "52d128c1787f047ba1d5927db7ca06357dd85bb37d462d876f03a9a2c187e851",
-    "topics.py": "b4009d056ce3c7ebffa81fbe3683faa5a52ae73ac987cf2d963a9ba821b0ab08"
+    "topics.py": "b4009d056ce3c7ebffa81fbe3683faa5a52ae73ac987cf2d963a9ba821b0ab08",
+    "classifier.py": "6788224ef5e76a0a0c833c331604c69073c9460998c6872a2dc94bb2219cf9c8"
   },
   "inferred_boundaries_require_live_choice": true,
   "feature_acceptance": false,
@@ -75,8 +76,8 @@
       "ambiguity_abstention_passed": true,
       "continuation_preservation_passed": true,
       "latency_ms": {
-        "p50": 0.0189125,
-        "p95": 0.03685
+        "p50": 0.0239925,
+        "p95": 0.056551
       },
       "boundary_thresholds_passed": true
     },
@@ -147,8 +148,8 @@
       "ambiguity_abstention_passed": true,
       "continuation_preservation_passed": true,
       "latency_ms": {
-        "p50": 0.022159,
-        "p95": 0.032641
+        "p50": 0.026494,
+        "p95": 0.047576
       },
       "boundary_thresholds_passed": true
     }

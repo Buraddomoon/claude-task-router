@@ -68,7 +68,7 @@ def main():
             # told to exit, before the supervisor can classify/start a successor.
             os.kill(os.getpid(), signal.SIGINT)
 
-    files = ("cli.py", "launcher.py", "conversation.py", "conversation_hook.py", "topics.py", "state.py")
+    files = ("cli.py", "launcher.py", "conversation.py", "conversation_hook.py", "topics.py", "classifier.py", "state.py")
     record("start", source_sha256={name: hashlib.sha256((ROOT / "claude_task_router" / name).read_bytes()).hexdigest()
                                    for name in files}, interrupt_handoff=args.interrupt_handoff)
     try:

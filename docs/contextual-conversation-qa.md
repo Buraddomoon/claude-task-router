@@ -96,6 +96,17 @@ completa de reiniciar a TUI ou o tempo de resposta do provedor.
 
 ## Reprodução e pendência externa
 
+A CI revelou posteriormente latência máxima acima de 150 ms no runner macOS
+Intel (208,0 e 212,6 ms em duas tentativas), apesar dos testes funcionais
+aprovados. O teto não foi alterado. Foram evitadas a normalização Unicode
+caractere a caractere para ASCII e buscas por caminhos quando faltam os
+caracteres que o regex exige. As regras/tier permanecem iguais: 307 entradas
+fixas/adversariais e a entrada máxima produziram decisões idênticas ao baseline.
+O p95 máximo local passou a 14,2 ms. A suíte passou com 100 testes, incluindo
+acentos, Unicode e referências a arquivos com palavras de risco. Os ledgers
+nativos anteriores conservam seus hashes/timings; essa otimização não é
+apresentada como nova medição nativa de resposta, qualidade ou faturamento.
+
 Em terminal nativo, usando diretórios temporários próprios já criados:
 
 ```bash

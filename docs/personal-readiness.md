@@ -57,7 +57,7 @@ são separados. A instalação deve permanecer pessoal, em diretório dedicado.
   a [investigação ampliada](native-supervisor-proof.md) demonstrou supervisão
   no mesmo terminal. A [implementação contextual #39](contextual-conversation-qa.md)
   foi entregue e homologada em Linux, com escolha antes de transições inferidas,
-  erro/interrupção/retomada e 98 testes. A nova avaliação reservada reconheceu
+  erro/interrupção/retomada e 100 testes. A nova avaliação reservada reconheceu
   16/16 fronteiras e não trocou continuações/ambiguidades. #32/#40 permanecem
   abertas pela homologação macOS; o usuário confirmou que não há Mac disponível.
 

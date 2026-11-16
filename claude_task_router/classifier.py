@@ -8,7 +8,10 @@ from .config import Config, MAX_PROMPT_BYTES, TIERS
 
 
 def normalize(text: str) -> str:
-    return "".join(c for c in unicodedata.normalize("NFKD", text.lower())
+    lowered = text.lower()
+    if lowered.isascii():
+        return lowered
+    return "".join(c for c in unicodedata.normalize("NFKD", lowered)
                    if not unicodedata.combining(c))
 
 
@@ -34,6 +37,15 @@ RULES = (
         r"crie|criar|create|adicione|adicionar|add|bug\w*|endpoint\w*)\b")),
 )
 PATHS = re.compile(r"(?<!\w)(?:[\w.-]+/)+[\w.-]+|\b[\w-]+\.(?:py|js|ts|tsx|jsx|go|rs|md|json|yaml)\b")
+
+
+def may_contain_paths(text):
+    # Every PATHS match needs a slash or one of these literal suffixes.
+    # Prefixes .js/.ts also cover .jsx/.tsx; a false positive only runs the regex.
+    return "/" in text or ("." in text and any(suffix in text for suffix in
+                           (".py", ".js", ".ts", ".go", ".rs", ".md", ".json", ".yaml")))
+
+
 QUOTED = re.compile(r'```[\s\S]*?(?:```|$)|`[^`\n]*`|"[^"\n]*"|“[^”\n]*”|‘[^’\n]*’|(?<!\w)\'[^\'\n]*\'(?!\w)')
 CLAUSES = re.compile(r"[.;!?\n]+|,\s*|\s+(?:e|and|then|while|enquanto|depois|tambem|also|plus|"
                      r"alem de|bem como|as well as|mas|but|porem|however)\s+")
@@ -63,7 +75,9 @@ NO_OTHER_WORK = re.compile(r"^(?:sem|no|without)\s+(?:markdown|(?:outras?|other)
 
 def requested_work(text: str) -> tuple[str, bool]:
     """Conservative clause heuristic, not a parser or semantic risk assessment."""
-    work = PATHS.sub(" reference ", QUOTED.sub(" literal ", text))
+    work = QUOTED.sub(" literal ", text)
+    if may_contain_paths(work):
+        work = PATHS.sub(" reference ", work)
     clauses = [NEGATIVE.sub("", clause).strip() for clause in CLAUSES.split(work)]
     clauses = [clause for clause in clauses if clause]
     actions = []
@@ -120,7 +134,7 @@ def classify(prompt: str, config: Config | None = None) -> Decision:
         if pattern.search(work):
             reasons.append(reason)
             score += weight
-    paths = len(set(PATHS.findall(text)))
+    paths = len(set(PATHS.findall(text))) if may_contain_paths(text) else 0
     if paths >= 4:
         reasons.append("many_files")
         score += 3

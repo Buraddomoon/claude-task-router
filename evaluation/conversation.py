@@ -61,7 +61,7 @@ def evaluate(corpus_path):
     source_root = Path(__file__).resolve().parent.parent / "claude_task_router"
     return dict(scope="offline_contextual_detector_only", corpus_sha256=hashlib.sha256(raw).hexdigest(),
         detector_sha256={name: hashlib.sha256((source_root/name).read_bytes()).hexdigest()
-                         for name in ("conversation.py", "topics.py")},
+                         for name in ("conversation.py", "topics.py", "classifier.py")},
         inferred_boundaries_require_live_choice=True,
         feature_acceptance=False, native_e2e="separate evidence required",
         inference_calls=0, results=results)

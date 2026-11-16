@@ -443,5 +443,7 @@
     "kernel": "6.19.10-300.fc44.x86_64",
     "distribution": "Fedora Linux 44 (KDE Plasma Desktop Edition)"
   },
-  "refinements_after_normal_run": "The normal run exposed Ctrl-U clearing only the current line of a multiline draft. UI now says Ctrl-C once; error and resume runs exercised that correction. Later unit-tested controls preserve the initial exemption across stale control inputs and abstain on uncertain compound markers; no reserved-case recalibration."
+  "refinements_after_normal_run": "The normal run exposed Ctrl-U clearing only the current line of a multiline draft. UI now says Ctrl-C once; error and resume runs exercised that correction. Later unit-tested controls preserve the initial exemption across stale control inputs and abstain on uncertain compound markers; no reserved-case recalibration.",
+  "tier_classifier_sha256_at_native_runs": "1e4cb0845393c6cbf38696a5357a3bd96ac98a20106f2cc438d6a9e3925e36cb",
+  "subsequent_equivalent_optimization": "ASCII normalization and sound path-scan preconditions; tier decisions identical to baseline on 307 fixed/adversarial/max-size inputs. Native ledgers and timings above precede this optimization."
 }
