@@ -6,6 +6,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -193,3 +194,84 @@ class ConversationTests(unittest.TestCase):
             with self.assertRaisesRegex(OSError, "no socket"):
                 run_conversation(self.store, task, str(FAKE), None, [], False)
         self.assertEqual(self.store.get(task["id"])["last_exit_code"], 2)
+
+    def test_inferred_boundary_needs_live_choice_and_never_echoes_goal(self):
+        task = self.task("Translate navigation labels")
+        self.store.launched(task["id"])
+        task = self.store.get(task["id"])
+        goal = "Create a backup routine for local files"
+        with PromptGate(task, "Translate navigation labels") as gate:
+            def send(prompt):
+                request = dict(token=gate.token, execution_id=task["execution_id"],
+                    session_id=task["id"], cwd=task["cwd"], prompt=prompt)
+                peer = socket.socket(socket.AF_UNIX)
+                self.addCleanup(peer.close)
+                peer.settimeout(2)
+                peer.connect(gate.path)
+                peer.sendall(json.dumps(request).encode() + b"\n")
+                outcome = gate.poll()
+                reply = None if outcome else json.loads(peer.recv(4096))
+                return outcome, reply
+
+            outcome, reply = send(goal)
+            self.assertIsNone(outcome)
+            self.assertEqual(reply["action"], "block")
+            self.assertNotIn(goal, reply["reason"])
+            nonce = gate.proposal[1]
+            wrong = "ffffff" if nonce != "ffffff" else "000000"
+            self.assertEqual(send("ctr:new " + wrong)[1]["action"], "block")
+            # A stale/invalid control cannot reach Claude or replace the goal.
+            self.assertEqual(gate.proposal[0], goal)
+            self.assertEqual(send("ctr:cancel " + nonce)[1]["action"], "block")
+            self.assertIsNone(gate.proposal)
+            self.assertEqual(send("ctr:new " + nonce)[1]["action"], "block")
+            send(goal)
+            nonce = gate.proposal[1]
+            gate.proposal = (goal, nonce, time.monotonic() - 1)
+            self.assertEqual(send("ctr:new " + nonce)[1]["action"], "block")
+            self.assertIsNone(gate.proposal)
+            send(goal)
+            nonce = gate.proposal[1]
+            self.assertEqual(send("sim")[1]["action"], "block")
+            self.assertEqual(send("ctr:typo " + nonce)[1]["action"], "block")
+            self.assertEqual(gate.proposal[0], goal)
+            outcome, _ = send("ctr:continue " + nonce)
+            self.assertEqual(outcome, Handoff(goal, "continue"))
+            self.assertIsNone(gate.proposal)
+        self.assertEqual(len(self.store.list_tasks(self.project)), 1)
+        self.assertNotIn(goal.encode(), self.store.path.read_bytes())
+
+    def test_contextual_handoff_runs_goal_once_only_after_new_choice(self):
+        initial = "Translate navigation labels"
+        task = self.task(initial, model="haiku")
+        goal = "Create a backup routine for local files"
+        self.env["FAKE_CHAT_PLAN"] = json.dumps([[goal, {"choose": "new"}], ["Continue with tests"]])
+        with patch.dict(os.environ, self.env, clear=True), \
+             patch("claude_task_router.classifier.classify", wraps=classify) as classifier:
+            code = run_conversation(self.store, task, str(FAKE), initial, [], False)
+        self.assertEqual(code, 0)
+        self.assertEqual(classifier.call_count, 1)
+        executions = [json.loads(x) for x in self.log.read_text().splitlines()]
+        goals = [x for x in executions if x["prompt"] == goal]
+        self.assertEqual(len(goals), 1)
+        self.assertNotEqual(goals[0]["session_id"], task["id"])
+        self.assertFalse(any(x["prompt"].startswith("ctr:") for x in executions))
+
+    def test_same_task_choice_preserves_uuid_manual_model_and_skips_classifier(self):
+        initial = "Translate navigation labels"
+        task = self.task(initial, model="haiku")
+        goal = "Create a backup routine for local files"
+        self.env["FAKE_CHAT_PLAN"] = json.dumps([
+            [{"model": "opus"}, goal, {"choose": "continue"}], ["Continue with tests"]])
+        with patch.dict(os.environ, self.env, clear=True), \
+             patch("claude_task_router.classifier.classify", side_effect=AssertionError("classification")):
+            code = run_conversation(self.store, task, str(FAKE), initial, [], False)
+        self.assertEqual(code, 0)
+        current = self.store.get(task["id"])
+        self.assertEqual(current["model"], "opus")
+        self.assertEqual(current["launches"], 2)
+        self.assertEqual(len(self.store.list_tasks(self.project)), 1)
+        executions = [json.loads(x) for x in self.log.read_text().splitlines()]
+        self.assertEqual({x["session_id"] for x in executions}, {task["id"]})
+        self.assertEqual(sum(x["prompt"] == goal for x in executions), 1)
+        self.assertEqual(next(x["model"] for x in executions if x["prompt"] == goal), "claude-opus-test-001")

@@ -2,6 +2,7 @@
 """Deterministic CLI contract double. Never makes an API call."""
 
 import json
+import re
 from datetime import datetime, timezone
 import os
 from pathlib import Path
@@ -65,7 +66,11 @@ if os.environ.get("FAKE_NO_MODEL"):
     payload["transcript_path"] = str(transcript)
 
 
+last_block_reason = ""
+
+
 def hook(event, payload):
+    global last_block_reason
     for entry in settings["hooks"][event]:
         for handler in entry["hooks"]:
             result = subprocess.run(handler["command"], shell=True, input=json.dumps(payload),
@@ -73,6 +78,7 @@ def hook(event, payload):
             if event == "UserPromptSubmit" and result.stdout:
                 output = json.loads(result.stdout)
                 if output.get("decision") == "block":
+                    last_block_reason = output.get("reason", "")
                     return False
                 if set(output) == {"systemMessage"}:
                     continue
@@ -98,10 +104,15 @@ if os.environ.get("FAKE_CHAT_PLAN"):
     messages = ([args[-1]] if "--" in args else []) + (plan[index] if index < len(plan) else [])
     for message in messages:
         if isinstance(message, dict):
-            active = message["model"]
-            hook("PostModelSwitch", dict(payload, hook_event_name="PostModelSwitch",
-                 to_model=active, requested_model=active, source="picker"))
-            continue
+            if "model" in message:
+                active = message["model"]
+                hook("PostModelSwitch", dict(payload, hook_event_name="PostModelSwitch",
+                     to_model=active, requested_model=active, source="picker"))
+                continue
+            nonce = re.search(r"ctr:new ([a-f0-9]{6})", last_block_reason)
+            if not nonce:
+                raise ValueError("No pending native choice")
+            message = "ctr:" + message["choose"] + " " + nonce[1]
         if hook("UserPromptSubmit", dict(payload, hook_event_name="UserPromptSubmit", prompt=message)):
             with open(os.environ["FAKE_EXECUTED_LOG"], "a") as out:
                 out.write(json.dumps(dict(session_id=session, model=active, prompt=message)) + "\n")

@@ -16,6 +16,8 @@ def main():
     parser.add_argument("--token", required=True)
     parser.add_argument("--execution-id", required=True)
     args = parser.parse_args()
+    reason = ("[ctr] Controle da tarefa indisponível ou sessão alterada. Pedido não executado. "
+              "Retome a tarefa pelo ctr e reenvie o pedido.")
     try:
         raw = sys.stdin.buffer.read(MAX_MESSAGE + 1)
         if len(raw) > MAX_MESSAGE:
@@ -43,11 +45,11 @@ def main():
                 if output.get("notice"):
                     print(json.dumps({"systemMessage": output["notice"]}))
                 return 0
+            if output.get("action") == "block" and isinstance(output.get("reason"), str):
+                reason = output["reason"]
     except (OSError, ValueError, TypeError, AttributeError):
         pass
-    print(json.dumps({"decision": "block", "reason":
-        "[ctr] Controle da tarefa indisponível ou sessão alterada. Pedido não executado. "
-        "Retome a tarefa pelo ctr e reenvie o pedido.", "hookSpecificOutput": {
+    print(json.dumps({"decision": "block", "reason": reason, "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit", "suppressOriginalPrompt": True}}))
     return 0
 

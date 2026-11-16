@@ -109,12 +109,16 @@ def _run(store, task, binary, prompt, extra, resume, timeout, conversation=False
                          f"ctr recover {task['id']} --cwd /diretorio/valido --prompt-file tarefa.txt.")
     validate_extra(extra)
     validate_timeout(extra, timeout)
+    context = None
+    if conversation:
+        from .topics import TaskContext
+        context = TaskContext.from_transcript(store, task) if resume else TaskContext.from_prompt(prompt)
     store.launched(task["id"])
     task = store.get(task["id"])
     if conversation:
         from .conversation import PromptGate
         try:
-            gate = PromptGate(task, prompt)
+            gate = PromptGate(task, prompt, context)
         except (OSError, ValueError):
             store.finished(task["id"], 2)
             raise
@@ -246,6 +250,12 @@ def run_conversation(store, task, binary, prompt, extra, resume, override=None):
                 outcome = _run(store, task, binary, prompt, extra, resume, None, conversation=True)
                 if isinstance(outcome, Handoff):
                     prompt = outcome.prompt
+                    if outcome.action == "continue":
+                        # The original request is replayed into the same saved
+                        # session/model, without invoking the tier classifier.
+                        resume = True
+                        print(f"[ctr] mesma tarefa {task['id']}; escolha preservada.", file=sys.stderr)
+                        continue
                     try:
                         decision = classify(prompt, Config(**task["config"]))
                         successor = store.create(Path(task["cwd"]), prompt, decision.to_dict(),
