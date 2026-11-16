@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 from pathlib import Path
@@ -61,10 +62,14 @@ class ConversationTests(unittest.TestCase):
                 payload.update(changes)
                 peer = socket.socket(socket.AF_UNIX)
                 self.addCleanup(peer.close)
-                peer.settimeout(1)
+                peer.settimeout(3)
                 peer.connect(gate.path)
-                peer.sendall(json.dumps(payload).encode() + b"\n")
-                outcome = gate.poll()
+                # Read concurrently with the sender, as the real helper does.
+                # macOS socket buffers cannot hold the oversized case at once.
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    sent = executor.submit(peer.sendall, json.dumps(payload).encode() + b"\n")
+                    outcome = gate.poll()
+                    sent.result(timeout=3)
                 return outcome, None if outcome else json.loads(peer.recv(4096))
 
             for changes in ({"execution_id": "stale"}, {"session_id": "foreign"},
