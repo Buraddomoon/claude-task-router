@@ -52,6 +52,12 @@ são separados. A instalação deve permanecer pessoal, em diretório dedicado.
 
 ## Validações pendentes e itens futuros
 
+- **Troca automática de tarefa na conversa (#32):** investigação #38 com
+  [ADR](adr/0001-conversation-task-boundaries.md) e prova nativa Linux concluída;
+  controle público necessário à implementação #39 não demonstrado. A #40 tem
+  [corpus e critérios congelados](../evaluation/conversation-boundary-protocol.md),
+  sem resultados de detecção ou E2E da feature. #32/#39/#40 permanecem abertas.
+
 - **macOS com conta e terminal nativo:** não foi executado neste host Linux.
   A CI cobre o SO, subprocessos, sinais, locks, instalação e artefato com
   cliente simulado. O roteiro de PTY está disponível; não se afirma homologação
