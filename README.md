@@ -159,6 +159,11 @@ python3 evaluation/real.py
 
 Os testes usam uma CLI simulada e não consomem IA. O benchmark reporta latência local e verifica exemplos sintéticos da política; não mede qualidade de respostas nem economia real de faturamento. Evidências do smoke real: [docs/validation.md](docs/validation.md).
 
+A [avaliação prospectiva #31](docs/prospective-evaluation.md) tem protocolo
+congelado, instrumentação de deltas em retomadas e smoke nativo de US$ 0,00724
+estimados. Tarefas reais diversas e revisão humana permanecem pendentes;
+economia geral e redução de tokens continuam não comprovadas.
+
 Uma [comparação real controlada](docs/real-efficiency.md) registrou tanto a
 piora inicial como a melhora após correção: no seguimento, custo estimado do
 CLI −49,2%, tempo −12,5% e tokens **+20,4%**, com 12/12 acertos por braço.

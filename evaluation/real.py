@@ -161,7 +161,7 @@ def main():
     raw = Path(__file__).with_name("real-cases.json").read_bytes()
     cases = json.loads(raw)
     planned = len(cases) * 2 * args.repetitions
-    report = dict(protocol="real-v1", cases_sha256=hashlib.sha256(raw).hexdigest(),
+    report = dict(protocol="real-v2", cases_sha256=hashlib.sha256(raw).hexdigest(),
                   policy=classify("help").policy, python=platform.python_version(), platform=platform.system(),
                   planned_calls=planned, repetitions=args.repetitions, max_estimated_cost_usd=args.max_cost_usd,
                   router_inference_calls_per_classification=0, router_context_instructions=0,
@@ -173,8 +173,13 @@ def main():
     if args.output is None or args.output.exists() or not args.output.parent.is_dir():
         parser.error("--real exige --output novo em diretório existente.")
     binary = executable(args.claude_bin)
-    report["claude_version"] = subprocess.run([binary, "--version"], capture_output=True,
-                                              text=True, timeout=15, check=True).stdout.strip()
+    report["initial_client"] = provenance(binary)
+    report["claude_version"] = report["initial_client"]["version"]
+    if not stable(report["initial_client"], report["initial_client"]):
+        report["stopped"] = "client_provenance_unavailable"
+        report["summary"] = summarize([], planned)
+        save(args.output, report)
+        return 1
     with tempfile.TemporaryDirectory(prefix="ctr-real-") as raw_root:
         root = Path(raw_root)
         project = root / "project"
@@ -208,6 +213,9 @@ def main():
                                        "--state-dir", str(root / "state"), "--config", str(config),
                                        "new", case["prompt"], "--timeout", "90", "--", *flags]
                         before = provenance(binary)
+                        if before != report["initial_client"]:
+                            report["stopped"] = "client_changed_or_unverified"
+                            raise StopIteration
                         pending = dict(case=case["id"], repetition=repetition + 1, arm=arm, requested_model=choice,
                                        execution_ok=False, model_confirmed=False, quality_passed=False,
                                        duration_seconds=0, cli_estimated_cost_usd=None, total_tokens=None,
@@ -242,6 +250,9 @@ def main():
                             raise StopIteration
                         if not stable(before, record["client_after"]):
                             report["stopped"] = "client_changed_or_unverified"
+                            raise StopIteration
+                        if not ok:
+                            report["stopped"] = "execution_failure"
                             raise StopIteration
         except StopIteration:
             pass

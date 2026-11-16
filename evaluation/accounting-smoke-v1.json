@@ -1,0 +1,143 @@
+{
+  "protocol": "accounting-smoke-v1",
+  "planned_calls": 2,
+  "max_estimated_cost_usd": 0.05,
+  "max_cost_per_call_usd": 0.025,
+  "prompts_sha256": [
+    "800c87f020f12e7fddbad75029bce6d16c99d779a336ac1ad9262b31bea90f19",
+    "7f2ede6216aeb002d9d86c4d9aa831c220b50e90f10aabc333df414c31a001c8"
+  ],
+  "source_sha256": "14f196c32461bec2dffc6d0dda9b96503820e0083e6a0719591d1c7ea27fd53f",
+  "python": "3.14.3",
+  "platform": "Linux",
+  "savings_evaluation": false,
+  "records": [
+    {
+      "case": "S01",
+      "arm": "routed",
+      "repetition": 1,
+      "turn": 1,
+      "requested_model": "sonnet",
+      "session_id": "6f297a6c-0152-4424-869a-59e7452122ad",
+      "status": "finished",
+      "execution_ok": true,
+      "model_confirmed": true,
+      "functional_passed": true,
+      "human_review": "pending",
+      "critical_regression": null,
+      "cli_estimated_cost_usd": 0.0054609,
+      "total_tokens": 1993,
+      "duration_seconds": 2.815120608998768,
+      "client_before": {
+        "version": "2.1.325",
+        "binary_sha256": "0dc4f4a9a165fc60746d7ae8489712e5fc352f1e7ad4eb22e7141bd0812eb0cf"
+      },
+      "client_after": {
+        "version": "2.1.325",
+        "binary_sha256": "0dc4f4a9a165fc60746d7ae8489712e5fc352f1e7ad4eb22e7141bd0812eb0cf"
+      },
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 1338,
+        "cache_read_input_tokens": 649,
+        "output_tokens": 4
+      },
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "cumulative": {
+        "session_id": "6f297a6c-0152-4424-869a-59e7452122ad",
+        "cost_usd": 0.0054609,
+        "models": {
+          "claude-sonnet-5-5": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 1338,
+            "cache_read_input_tokens": 649,
+            "output_tokens": 4
+          }
+        }
+      },
+      "measurement_issues": [],
+      "api_invoice_usd": null,
+      "subscription_quota": null,
+      "billing_source": "unverified",
+      "quota_source": "unverified",
+      "exit_code": 0,
+      "router_observation": {
+        "classifications": 1,
+        "classification_seconds": 3.346700032125227e-05,
+        "native_seconds": 2.7200580480002827,
+        "router_seconds": 0.006347823999021784
+      },
+      "persisted_session_confirmed": true
+    },
+    {
+      "case": "S01",
+      "arm": "routed",
+      "repetition": 1,
+      "turn": 2,
+      "requested_model": "sonnet",
+      "session_id": "6f297a6c-0152-4424-869a-59e7452122ad",
+      "status": "finished",
+      "execution_ok": true,
+      "model_confirmed": true,
+      "functional_passed": true,
+      "human_review": "pending",
+      "critical_regression": null,
+      "cli_estimated_cost_usd": 0.0017764,
+      "total_tokens": 2042,
+      "duration_seconds": 2.0993631610017474,
+      "client_before": {
+        "version": "2.1.325",
+        "binary_sha256": "0dc4f4a9a165fc60746d7ae8489712e5fc352f1e7ad4eb22e7141bd0812eb0cf"
+      },
+      "client_after": {
+        "version": "2.1.325",
+        "binary_sha256": "0dc4f4a9a165fc60746d7ae8489712e5fc352f1e7ad4eb22e7141bd0812eb0cf"
+      },
+      "token_usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 392,
+        "cache_read_input_tokens": 1644,
+        "output_tokens": 4
+      },
+      "effective_models": [
+        "claude-sonnet-5-5"
+      ],
+      "cumulative": {
+        "session_id": "6f297a6c-0152-4424-869a-59e7452122ad",
+        "cost_usd": 0.0072373,
+        "models": {
+          "claude-sonnet-5-5": {
+            "input_tokens": 4,
+            "cache_creation_input_tokens": 1730,
+            "cache_read_input_tokens": 2293,
+            "output_tokens": 8
+          }
+        }
+      },
+      "measurement_issues": [],
+      "api_invoice_usd": null,
+      "subscription_quota": null,
+      "billing_source": "unverified",
+      "quota_source": "unverified",
+      "exit_code": 0,
+      "router_observation": {
+        "classifications": 0,
+        "classification_seconds": 0.0,
+        "native_seconds": 2.0179275699993013,
+        "router_seconds": 0.005011737999666366
+      },
+      "persisted_session_confirmed": true
+    }
+  ],
+  "stopped": null,
+  "summary": {
+    "accounting_check_passed": true,
+    "known_cost_usd": 0.0072373,
+    "measurements_complete": true,
+    "savings_proven": false,
+    "api_invoice_usd": null,
+    "subscription_quota": null
+  }
+}

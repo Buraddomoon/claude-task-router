@@ -12,7 +12,10 @@ TOKEN_FIELDS = dict(input_tokens="inputTokens", cache_creation_input_tokens="cac
 
 def number(value, integer=False):
     valid = type(value) is int if integer else type(value) in (int, float)
-    return value if valid and math.isfinite(value) and value >= 0 else None
+    try:
+        return value if valid and math.isfinite(value) and value >= 0 else None
+    except OverflowError:
+        return None
 
 
 def provenance(binary):

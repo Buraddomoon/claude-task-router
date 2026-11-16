@@ -89,11 +89,12 @@ def freeze(manifest_path, protocol):
             path = Path(source).resolve()
             if path.is_relative_to(ROOT):
                 raise ValueError("Prompts privados devem ficar fora do repositório do roteador.")
-            prompt = path.read_text(encoding="utf-8")
+            prompt_raw = path.read_bytes()
+            prompt = prompt_raw.decode("utf-8")
             validate_prompt(prompt)
             if len(prompt.encode()) > 96 * 1024:
                 raise ValueError("Prompt excede o limite do launcher.")
-            hashed = digest(prompt.encode())
+            hashed = digest(prompt_raw)
             if hashed in known:
                 raise ValueError("Um prompt já pertence ao corpus conhecido.")
             hashes.append(hashed)
@@ -117,12 +118,13 @@ def call(report, output, command, project, env, binary, *, case, arm, repetition
          timeout=180, expected_classifications=None, state_dir=None):
     """Persist the attempt BEFORE spawn; unknown consumption survives crashes."""
     before = provenance(binary)
+    source_before = sources_hash()
     row = dict(case=case, arm=arm, repetition=repetition, turn=turn,
                requested_model=choice, session_id=expected_session, status="started",
                execution_ok=False, model_confirmed=False, functional_passed=None,
                human_review="pending", critical_regression=None,
                cli_estimated_cost_usd=None, total_tokens=None, duration_seconds=0,
-               client_before=before, client_after=None)
+               client_before=before, client_after=None, source_before_sha256=source_before)
     report["records"].append(row)
     save(output, report)
     started = time.monotonic()
@@ -145,6 +147,10 @@ def call(report, output, command, project, env, binary, *, case, arm, repetition
     row.update(status="finished", exit_code=code, client_after=provenance(binary),
                session_id=current["session_id"],
                execution_ok=code == 0 and payload.get("subtype") == "success" and not payload.get("is_error"))
+    row["source_after_sha256"] = sources_hash()
+    expected_sources = report.get("lock", {}).get("source_sha256", report.get("source_sha256"))
+    if row["source_after_sha256"] != source_before or expected_sources and source_before != expected_sources:
+        row["measurement_issues"].append("router_or_harness_sources_changed")
     if expected_session and current["session_id"] != expected_session:
         row["measurement_issues"].append("unexpected_session")
     if not stable(before, row["client_after"]):
@@ -241,7 +247,24 @@ def flags(protocol):
 
 def run(manifest, lock, protocol, binary, output, work_root):
     private_directory(work_root)
-    data = json.loads(manifest.read_bytes())
+    manifest_raw = manifest.read_bytes()
+    if digest(manifest_raw) != lock["manifest_sha256"]:
+        raise ValueError("O manifesto mudou desde o congelamento.")
+    data = json.loads(manifest_raw)
+    # Copy the authorized bytes once. Native/model activity and external edits
+    # cannot replace a later turn's prompt after the lock was verified.
+    for task, metadata in zip(data["tasks"], lock["tasks"]):
+        frozen_prompts = []
+        for turn, source in enumerate(task["prompts"]):
+            raw = Path(source).read_bytes()
+            if digest(raw) != metadata["prompts_sha256"][turn]:
+                raise ValueError("Um prompt mudou desde o congelamento.")
+            destination = work_root / f'{task["id"]}-prompt-{turn+1}.txt'
+            fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(raw)
+            frozen_prompts.append(str(destination))
+        task["prompts"] = frozen_prompts
     report = dict(protocol=protocol["id"], lock_sha256=digest(encoded(lock)), lock=lock,
                   python=platform.python_version(), platform=platform.system(),
                   load_average=list(os.getloadavg()), planned_calls=len(data["tasks"]) * 2 * protocol["repetitions"] * 2,

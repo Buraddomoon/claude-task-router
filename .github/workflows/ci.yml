@@ -36,7 +36,10 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: python benchmarks/run.py
       - name: Plan real evaluation without inference
-        run: python evaluation/real.py > real-evaluation-plan.json
+        run: |
+          python evaluation/real.py > real-evaluation-plan.json
+          python evaluation/real.py --prospective > prospective-evaluation-plan.json
+          python evaluation/real.py --smoke > accounting-smoke-plan.json
       - name: Fixed evaluation corpus and latency gates
         run: python evaluation/run.py --output evaluation-ci.json
       - name: Contextual conversation boundaries and reserved corpus
@@ -53,3 +56,5 @@ jobs:
             evaluation-ci.json
             conversation-evaluation-ci.json
             real-evaluation-plan.json
+            prospective-evaluation-plan.json
+            accounting-smoke-plan.json
