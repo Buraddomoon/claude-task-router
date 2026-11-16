@@ -54,9 +54,11 @@ são separados. A instalação deve permanecer pessoal, em diretório dedicado.
 
 - **Troca automática de tarefa na conversa (#32):** investigação #38 com
   [ADR](adr/0001-conversation-task-boundaries.md) e prova nativa Linux concluída;
-  controle público necessário à implementação #39 não demonstrado. A #40 tem
-  [corpus e critérios congelados](../evaluation/conversation-boundary-protocol.md),
-  sem resultados de detecção ou E2E da feature. #32/#39/#40 permanecem abertas.
+  a [investigação ampliada](native-supervisor-proof.md) demonstrou supervisão
+  no mesmo terminal. #39 tem modo experimental para fronteiras explícitas;
+  a [avaliação #40](../evaluation/conversation-boundary-protocol.md) teve recall
+  insuficiente para mudanças livres (25%). #32/#39/#40 permanecem abertas,
+  com E2E nativo completo e macOS ainda pendentes.
 
 - **macOS com conta e terminal nativo:** não foi executado neste host Linux.
   A CI cobre o SO, subprocessos, sinais, locks, instalação e artefato com

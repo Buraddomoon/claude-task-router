@@ -1,10 +1,10 @@
 # Protocolo de detecção na conversa — #40
 
 Congelado em 16/11/2026, antes de implementar/calibrar o detector de #39.
-Estado: **preparação parcial; avaliação e E2E bloqueados** pela
-[ADR 0001](../docs/adr/0001-conversation-task-boundaries.md) e pela homologação
-macOS #30. Não há resultado de acurácia, falso positivo/negativo ou custo da
-feature. Os 80 testes existentes e o ensaio de interfaces #38 não os substituem.
+Estado: **detector avaliado; critérios não atingidos; E2E completo pendente**.
+A [ADR revisada](../docs/adr/0001-conversation-task-boundaries.md) selecionou
+supervisão POSIX após prova nativa Linux. O modo experimental já existe,
+mas a detecção livre e a homologação macOS #30 continuam pendentes.
 
 SHA-256 do corpus congelado:
 `df272d3b2c9ea8250f2205813254cfec2f8ec0fbedb80ccd9606ab50444cc219`.
@@ -82,10 +82,34 @@ do CLI de faturamento. Exportar apenas metadados permitidos, não transcrições
 | Capacidade | Linux | macOS |
 | --- | --- | --- |
 | Observação/bloqueio e comandos públicos manuais | Prova #38, Claude 2.1.325 | Não executado |
-| Nova fronteira automática dentro da TUI | Bloqueada: controle público não demonstrado | Mesmo bloqueio; host nativo indisponível |
-| Corpus reservado contra implementação aprovada | Não executado | Não executado |
-| Fluxo completo, override, erro, interrupção e retomada da nova feature | Não executado | Não executado; depende também de #30 |
+| Fronteira explícita digitada na TUI | Supervisor validado PT/EN, Claude 2.1.325 | Host nativo indisponível |
+| Corpus reservado contra detector experimental | Executado; recall 25%, reprovado | Detector local portátil; não executado nesse SO |
+| Fluxo completo, override, erro, interrupção e retomada da nova feature | Override/retomada nativos; erros e transição interrompida ainda sem E2E completo | Não executado; depende também de #30 |
 
-O próximo artefato de avaliação deve registrar SHA-256 do corpus, commit do
-detector, versões, contadores, erros e limitações. Esta preparação não remove
-dependências nem encerra #40.
+## Primeiro resultado, sem recalibração após avaliação
+
+`python3 evaluation/conversation.py --output /tmp/conversation-results.json`
+não inicia Claude nem usa IA. Retorna código 1 quando os limiares falham.
+O [resultado versionado](conversation-boundary-results.json) registra hash do
+corpus e do detector, matriz 3×3 por idioma, IDs dos erros e latências locais.
+O status no JSON do corpus pertence à imagem original congelada; resultados
+ficam separados para preservar seu hash.
+
+| Split | Novas reconhecidas | Falsos positivos | Falsos negativos | Precisão de fronteira | Recall |
+| --- | --- | --- | --- | --- | --- |
+| Desenvolvimento | 4/8 | 0 | 4 | 4/4, 100% | 50% |
+| Avaliação reservada | 2/8 | 0 | 6 | 2/2, 100% | 25% |
+
+No reservado, 8/8 ambiguidades resultaram em abstenção. Duas continuações
+foram reconhecidas explicitamente; seis também resultaram em abstenção,
+preservando a tarefa com aviso. Nenhuma continuação/ambiguidade gerou fronteira.
+Esses números avaliam o detector, não demonstram todo o ciclo nativo.
+
+O resultado **não aprova #40**. O detector não foi ajustado aos casos reservados
+após pontuá-los. Evoluções que calibrem com esses erros devem usar outro
+conjunto reservado antes de alegar generalização. A
+[prova nativa](../docs/native-supervisor-proof.md) é evidência separada do
+controle para marcadores, sem custo/faturamento geral medido.
+
+Artefatos seguintes devem registrar SHA-256 do corpus, commit do detector,
+versões, contadores, erros e limitações. Estes resultados não encerram #40.

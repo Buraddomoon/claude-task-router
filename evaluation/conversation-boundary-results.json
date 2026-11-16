@@ -1,0 +1,254 @@
+{
+  "scope": "offline_detector_only",
+  "corpus_sha256": "df272d3b2c9ea8250f2205813254cfec2f8ec0fbedb80ccd9606ab50444cc219",
+  "detector_sha256": "774e26871682e3f5e98859b7d76fb9fa81e1940cd57d10146c0d09d9f9ca9ea5",
+  "feature_acceptance": false,
+  "native_e2e": "separate evidence required",
+  "inference_calls": 0,
+  "results": {
+    "development": {
+      "matrix": {
+        "new": {
+          "new": 4,
+          "continue": 0,
+          "ambiguous": 4
+        },
+        "continue": {
+          "new": 0,
+          "continue": 4,
+          "ambiguous": 4
+        },
+        "ambiguous": {
+          "new": 0,
+          "continue": 2,
+          "ambiguous": 6
+        }
+      },
+      "by_language": {
+        "pt": {
+          "new": {
+            "new": 2,
+            "continue": 0,
+            "ambiguous": 2
+          },
+          "continue": {
+            "new": 0,
+            "continue": 2,
+            "ambiguous": 2
+          },
+          "ambiguous": {
+            "new": 0,
+            "continue": 1,
+            "ambiguous": 3
+          }
+        },
+        "en": {
+          "new": {
+            "new": 2,
+            "continue": 0,
+            "ambiguous": 2
+          },
+          "continue": {
+            "new": 0,
+            "continue": 2,
+            "ambiguous": 2
+          },
+          "ambiguous": {
+            "new": 0,
+            "continue": 1,
+            "ambiguous": 3
+          }
+        }
+      },
+      "errors": [
+        {
+          "id": "dev-03",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "dev-04",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "dev-07",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "dev-08",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "dev-11",
+          "expected": "continue",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "dev-12",
+          "expected": "continue",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "dev-15",
+          "expected": "continue",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "dev-16",
+          "expected": "continue",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "dev-20",
+          "expected": "ambiguous",
+          "observed": "continue"
+        },
+        {
+          "id": "dev-24",
+          "expected": "ambiguous",
+          "observed": "continue"
+        }
+      ],
+      "true_positives": 4,
+      "false_positives": 0,
+      "false_negatives": 4,
+      "precision": 1.0,
+      "recall": 0.5,
+      "latency_ms": {
+        "p50": 0.0049785,
+        "p95": 0.010126
+      },
+      "boundary_thresholds_passed": false
+    },
+    "evaluation": {
+      "matrix": {
+        "new": {
+          "new": 2,
+          "continue": 0,
+          "ambiguous": 6
+        },
+        "continue": {
+          "new": 0,
+          "continue": 2,
+          "ambiguous": 6
+        },
+        "ambiguous": {
+          "new": 0,
+          "continue": 0,
+          "ambiguous": 8
+        }
+      },
+      "by_language": {
+        "pt": {
+          "new": {
+            "new": 1,
+            "continue": 0,
+            "ambiguous": 3
+          },
+          "continue": {
+            "new": 0,
+            "continue": 1,
+            "ambiguous": 3
+          },
+          "ambiguous": {
+            "new": 0,
+            "continue": 0,
+            "ambiguous": 4
+          }
+        },
+        "en": {
+          "new": {
+            "new": 1,
+            "continue": 0,
+            "ambiguous": 3
+          },
+          "continue": {
+            "new": 0,
+            "continue": 1,
+            "ambiguous": 3
+          },
+          "ambiguous": {
+            "new": 0,
+            "continue": 0,
+            "ambiguous": 4
+          }
+        }
+      },
+      "errors": [
+        {
+          "id": "eval-02",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-03",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-04",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-06",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-07",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-08",
+          "expected": "new",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-10",
+          "expected": "continue",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-11",
+          "expected": "continue",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-12",
+          "expected": "continue",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-14",
+          "expected": "continue",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-15",
+          "expected": "continue",
+          "observed": "ambiguous"
+        },
+        {
+          "id": "eval-16",
+          "expected": "continue",
+          "observed": "ambiguous"
+        }
+      ],
+      "true_positives": 2,
+      "false_positives": 0,
+      "false_negatives": 6,
+      "precision": 1.0,
+      "recall": 0.25,
+      "latency_ms": {
+        "p50": 0.006112,
+        "p95": 0.010669
+      },
+      "boundary_thresholds_passed": false
+    }
+  }
+}
