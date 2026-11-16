@@ -21,6 +21,7 @@ from claude_task_router.classifier import classify  # noqa: E402
 from claude_task_router.config import Config  # noqa: E402
 from claude_task_router.launcher import executable  # noqa: E402
 from claude_task_router.state import matches_choice  # noqa: E402
+from evaluation.measurements import marginal, provenance, snapshot, stable  # noqa: E402
 
 
 def quality(case, text):
@@ -67,14 +68,14 @@ def quality(case, text):
         return False
 
 
-def execute(command, cwd, env):
+def execute(command, cwd, env, timeout=100):
     try:
         child = subprocess.Popen(command, cwd=cwd, env=env, start_new_session=True,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     except OSError:
         return 2, ""  # Record a failed spawn instead of discarding the attempted row.
     try:
-        out, _ = child.communicate(timeout=100)
+        out, _ = child.communicate(timeout=timeout)
         return child.returncode, out
     except (subprocess.TimeoutExpired, KeyboardInterrupt):
         try:
@@ -101,7 +102,11 @@ def summarize(records, planned):
                            tokens=sum(r["total_tokens"] or 0 for r in selected),
                            measurements_complete=all(r["cli_estimated_cost_usd"] is not None
                                                      and r["total_tokens"] is not None for r in selected))
-    complete = (len(records) == planned and all(r["execution_ok"] and r.get("model_confirmed", False) for r in records)
+    comparable = bool(records) and all(stable(r.get("client_before"), r.get("client_after"))
+                                      and not r.get("measurement_issues") for r in records)
+    identities = {json.dumps(r.get("client_before"), sort_keys=True) for r in records}
+    comparable = comparable and len(identities) == 1
+    complete = (comparable and len(records) == planned and all(r["execution_ok"] and r.get("model_confirmed", False) for r in records)
                 and all(totals[arm]["measurements_complete"] for arm in totals))
     quality_ok = complete and totals["routed"]["quality_passed"] == totals["baseline"]["quality_passed"] == planned // 2
     reductions = {}
@@ -113,11 +118,11 @@ def summarize(records, planned):
         paired.setdefault((record.get("case"), record.get("repetition")), []).append(record)
     valid_pairs = [pair for pair in paired.values() if len(pair) == 2 and
                    {r["arm"] for r in pair} == {"baseline", "routed"} and
-                   all(r["quality_passed"] and r["execution_ok"] for r in pair)]
+                   all(r["quality_passed"] and r["execution_ok"] and r.get("model_confirmed") for r in pair)]
     pair_totals = {arm: dict(cost_usd=sum(r["cli_estimated_cost_usd"] or 0 for pair in valid_pairs for r in pair if r["arm"] == arm),
                             seconds=sum(r["duration_seconds"] for pair in valid_pairs for r in pair if r["arm"] == arm))
                    for arm in totals}
-    return dict(complete=complete, all_quality_passed=quality_ok, totals=totals,
+    return dict(complete=complete, comparable=comparable, all_quality_passed=quality_ok, totals=totals,
                 quality_valid_pairs=len(valid_pairs), quality_valid_pair_totals=pair_totals,
                 observed_reduction_percent=reductions,
                 note="Microtarefas sintéticas; custo estimado do CLI, não fatura. Sem garantia geral de qualidade/economia.")
@@ -136,6 +141,14 @@ def save(path, report):
 
 
 def main():
+    # Preserve the historical microtask runner. Prospective evaluation uses a
+    # separately frozen private manifest, never the calibration cases.
+    if "--prospective" in sys.argv[1:]:
+        from evaluation.prospective import main as prospective_main
+        return prospective_main([arg for arg in sys.argv[1:] if arg != "--prospective"])
+    if "--smoke" in sys.argv[1:]:
+        from evaluation.smoke import main as smoke_main
+        return smoke_main([arg for arg in sys.argv[1:] if arg != "--smoke"])
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--real", action="store_true")
     parser.add_argument("--claude-bin", default="claude")
@@ -173,7 +186,7 @@ def main():
         report["source_sha256"] = hashlib.sha256(b"".join(p.name.encode() + p.read_bytes() for p in sources)).hexdigest()
         config = root / "config.json"
         config.write_text(json.dumps(Config().snapshot()))
-        env = dict(os.environ, PYTHONPATH=str(frozen))
+        env = dict(os.environ, PYTHONPATH=os.pathsep.join((str(frozen), str(ROOT))))
         cap = .05
         flags = ["-p", "--output-format", "json", "--tools", "", "--no-chrome", "--restricted",
                  "--effort", "low", "--max-turns", "1", "--max-budget-usd", str(cap)]
@@ -194,6 +207,13 @@ def main():
                             command = [sys.executable, "-m", "claude_task_router", "--claude-bin", binary,
                                        "--state-dir", str(root / "state"), "--config", str(config),
                                        "new", case["prompt"], "--timeout", "90", "--", *flags]
+                        before = provenance(binary)
+                        pending = dict(case=case["id"], repetition=repetition + 1, arm=arm, requested_model=choice,
+                                       execution_ok=False, model_confirmed=False, quality_passed=False,
+                                       duration_seconds=0, cli_estimated_cost_usd=None, total_tokens=None,
+                                       client_before=before, client_after=None, status="started")
+                        report["records"].append(pending)
+                        save(args.output, report)
                         start = time.monotonic()
                         code, output = execute(command, project, env)
                         duration = round(time.monotonic() - start, 4)
@@ -203,26 +223,25 @@ def main():
                                 raise ValueError()
                         except ValueError:
                             payload = {}
-                        cost = payload.get("total_cost_usd")
-                        cost = float(cost) if type(cost) in (float, int) and math.isfinite(cost) and cost >= 0 else None
-                        usage = payload.get("usage", {})
-                        tokens = {key: usage.get(key) for key in ("input_tokens", "cache_creation_input_tokens",
-                                                               "cache_read_input_tokens", "output_tokens")}
-                        valid_tokens = all(type(v) is int and v >= 0 for v in tokens.values())
-                        models = list(payload.get("modelUsage", {}))
+                        measurement = marginal(snapshot(payload))
+                        cost = measurement["cli_estimated_cost_usd"]
+                        models = measurement["effective_models"]
                         ok = code == 0 and payload.get("subtype") == "success" and not payload.get("is_error")
                         passed = ok and quality(case, payload.get("result", ""))
                         record = dict(case=case["id"], repetition=repetition + 1, arm=arm, requested_model=choice,
                                       effective_models=models, model_confirmed=bool(models) and all(matches_choice(choice, m) for m in models),
                                       exit_code=code, execution_ok=ok, quality_passed=passed, native_turns=payload.get("num_turns"),
-                                      duration_seconds=duration, cli_estimated_cost_usd=cost, token_usage=tokens,
-                                      total_tokens=sum(tokens.values()) if valid_tokens else None)
-                        report["records"].append(record)
+                                      duration_seconds=duration, client_before=before, client_after=provenance(binary),
+                                      status="finished", **measurement)
+                        pending.update(record)
                         report["summary"] = summarize(report["records"], planned)
                         save(args.output, report)
                         print(json.dumps(record), flush=True)
                         if cost is None:
                             report["stopped"] = "missing_cost_measurement"
+                            raise StopIteration
+                        if not stable(before, record["client_after"]):
+                            report["stopped"] = "client_changed_or_unverified"
                             raise StopIteration
         except StopIteration:
             pass
