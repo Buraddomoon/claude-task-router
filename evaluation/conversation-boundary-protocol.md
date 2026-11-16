@@ -1,10 +1,43 @@
 # Protocolo de detecção na conversa — #40
 
 Congelado em 16/11/2026, antes de implementar/calibrar o detector de #39.
-Estado: **detector avaliado; critérios não atingidos; E2E completo pendente**.
+Estado atual: **V2 contextual aprovada no corpus e no E2E Linux;
+homologação nativa macOS pendente**.
 A [ADR revisada](../docs/adr/0001-conversation-task-boundaries.md) selecionou
-supervisão POSIX após prova nativa Linux. O modo experimental já existe,
-mas a detecção livre e a homologação macOS #30 continuam pendentes.
+supervisão POSIX após prova nativa Linux. A implementação contextual #39
+foi entregue; #40/#32 permanecem abertas porque o usuário confirmou que não
+há Mac disponível para cumprir #30 e o E2E real macOS.
+
+## Evolução V2
+
+O primeiro resultado abaixo pertence ao detector por marcadores. Seus casos
+reservados se tornaram conhecidos e foram usados apenas como desenvolvimento
+na evolução. Antes da implementação contextual, o commit a92a48d congelou
+[conversation-boundaries-v2.json](conversation-boundaries-v2.json), com 48
+casos de desenvolvimento e 48 destinados à avaliação, balanceados por classe/idioma.
+SHA-256: `42bb4112b4ddc745f750b03ed674a8ed65bbaa2c86df1496626ca4190b334228`.
+Os critérios numéricos de precisão, recall e falso positivo não foram relaxados.
+
+O teste de separação encontrou uma frase repetida entre splits, `v2-eval-26`,
+com contextos diferentes. O scorer exclui essa linha sem mudar o corpus ou seus
+rótulos, e registra seu ID. O [primeiro resultado sem filtro](conversation-boundary-results-v2-unfiltered.json)
+permanece preservado como superado; a linha excluída era um acerto.
+
+O [resultado V2](conversation-boundary-results-v2.json), em 47 casos estritamente
+separados por texto, tem 16/16 novas tarefas, 15/15 continuações e 16/16 ambiguidades: zero falsos
+positivos/negativos; precisão e recall 100% na amostra. A avaliação é pública,
+autoria compartilhada com o código e possui pares traduzidos; não prova
+generalização nem compreensão perfeita. Transições inferidas ainda exigem
+escolha antes de executar. O [QA nativo Linux](../docs/contextual-conversation-qa.md)
+verifica a aplicação dessa escolha, contadores, modelo inválido, sinal real,
+retomada e cancelamento. A CI roda o scorer V2 nos dois sistemas com zero IA.
+
+O scorer agora aceita `--corpus`; por padrão usa V2. O JSON da V1 e seu
+resultado original permanecem imutáveis. Ajustes posteriores ao primeiro
+score V2 foram de UI/controles, proteção de marcadores compostos e exclusão
+explícita da frase repetida, sem recalibrar a detecção com os casos reservados.
+
+## Protocolo e resultados históricos V1
 
 SHA-256 do corpus congelado:
 `df272d3b2c9ea8250f2205813254cfec2f8ec0fbedb80ccd9606ab50444cc219`.
@@ -33,9 +66,9 @@ por idioma e no total, com todos os IDs de erros e latência p50/p95.
 `ambiguous` significa abstenção e preservação da tarefa até decisão explícita.
 
 - **Falso positivo de fronteira:** predição `new` quando o esperado é
-  `continue` ou `ambiguous`. Limite: **0/16** no conjunto reservado.
+  `continue` ou `ambiguous`. Limite: **zero** (0/16 na V1, 0/31 na V2 pontuada).
 - **Falso negativo de fronteira:** caso `new` sem reconhecimento, incluindo
-  abstenção. Recall mínimo **90%**; com oito casos, exige **8/8**.
+  abstenção. Recall mínimo **90%**; exige 8/8 na V1 ou pelo menos 15/16 na V2.
 - Precisão de fronteira mínima **98%**, com denominador publicado; zero
   predições `new` não pode ser tratado como precisão perfeita nem aprovação.
 - Continuações devem preservar identidade, histórico e modelo em **8/8**;
@@ -82,9 +115,9 @@ do CLI de faturamento. Exportar apenas metadados permitidos, não transcrições
 | Capacidade | Linux | macOS |
 | --- | --- | --- |
 | Observação/bloqueio e comandos públicos manuais | Prova #38, Claude 2.1.325 | Não executado |
-| Fronteira explícita digitada na TUI | Supervisor validado PT/EN, Claude 2.1.325 | Host nativo indisponível |
-| Corpus reservado contra detector experimental | Executado; recall 25%, reprovado | Detector local portátil; não executado nesse SO |
-| Fluxo completo, override, erro, interrupção e retomada da nova feature | Override/retomada nativos; erros e transição interrompida ainda sem E2E completo | Não executado; depende também de #30 |
+| Fronteira explícita ou inferida digitada na TUI | Supervisor/contexto validados PT/EN, Claude 2.1.325 | Host nativo indisponível |
+| Corpus reservado | V1: 25% recall; V2 contextual: 100%, zero FP/FN | CI executa o detector local, sem Claude |
+| Override, erro, interrupção e retomada da nova feature | Picker, escolha de continuação, erro de modelo, SIGINT durante transição, retomada/cancelamento nativos comprovados | Não executado; depende de #30 |
 
 ## Primeiro resultado, sem recalibração após avaliação
 
@@ -105,8 +138,8 @@ foram reconhecidas explicitamente; seis também resultaram em abstenção,
 preservando a tarefa com aviso. Nenhuma continuação/ambiguidade gerou fronteira.
 Esses números avaliam o detector, não demonstram todo o ciclo nativo.
 
-O resultado **não aprova #40**. O detector não foi ajustado aos casos reservados
-após pontuá-los. Evoluções que calibrem com esses erros devem usar outro
+O resultado V1 **não aprova #40**. Naquela rodada, o detector não foi ajustado
+aos casos reservados após pontuá-los. Evoluções que calibrem com esses erros devem usar outro
 conjunto reservado antes de alegar generalização. A
 [prova nativa](../docs/native-supervisor-proof.md) é evidência separada do
 controle para marcadores, sem custo/faturamento geral medido.

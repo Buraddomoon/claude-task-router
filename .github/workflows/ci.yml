@@ -39,6 +39,8 @@ jobs:
         run: python evaluation/real.py > real-evaluation-plan.json
       - name: Fixed evaluation corpus and latency gates
         run: python evaluation/run.py --output evaluation-ci.json
+      - name: Contextual conversation boundaries and reserved corpus
+        run: python evaluation/conversation.py --output conversation-evaluation-ci.json
       - name: Installed entry point outside source directory
         run: |
           cd "$(mktemp -d)"
@@ -49,4 +51,5 @@ jobs:
           path: |
             dist/*.whl
             evaluation-ci.json
+            conversation-evaluation-ci.json
             real-evaluation-plan.json

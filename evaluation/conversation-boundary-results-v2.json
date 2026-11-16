@@ -1,0 +1,156 @@
+{
+  "scope": "offline_contextual_detector_only",
+  "corpus_sha256": "42bb4112b4ddc745f750b03ed674a8ed65bbaa2c86df1496626ca4190b334228",
+  "detector_sha256": {
+    "conversation.py": "52d128c1787f047ba1d5927db7ca06357dd85bb37d462d876f03a9a2c187e851",
+    "topics.py": "b4009d056ce3c7ebffa81fbe3683faa5a52ae73ac987cf2d963a9ba821b0ab08"
+  },
+  "inferred_boundaries_require_live_choice": true,
+  "feature_acceptance": false,
+  "native_e2e": "separate evidence required",
+  "inference_calls": 0,
+  "results": {
+    "development": {
+      "matrix": {
+        "new": {
+          "new": 16,
+          "continue": 0,
+          "ambiguous": 0
+        },
+        "continue": {
+          "new": 0,
+          "continue": 16,
+          "ambiguous": 0
+        },
+        "ambiguous": {
+          "new": 0,
+          "continue": 0,
+          "ambiguous": 16
+        }
+      },
+      "by_language": {
+        "pt": {
+          "new": {
+            "new": 8,
+            "continue": 0,
+            "ambiguous": 0
+          },
+          "continue": {
+            "new": 0,
+            "continue": 8,
+            "ambiguous": 0
+          },
+          "ambiguous": {
+            "new": 0,
+            "continue": 0,
+            "ambiguous": 8
+          }
+        },
+        "en": {
+          "new": {
+            "new": 8,
+            "continue": 0,
+            "ambiguous": 0
+          },
+          "continue": {
+            "new": 0,
+            "continue": 8,
+            "ambiguous": 0
+          },
+          "ambiguous": {
+            "new": 0,
+            "continue": 0,
+            "ambiguous": 8
+          }
+        }
+      },
+      "errors": [],
+      "scored_cases": 48,
+      "excluded_development_overlap_ids": [],
+      "true_positives": 16,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "ambiguity_abstention_passed": true,
+      "continuation_preservation_passed": true,
+      "latency_ms": {
+        "p50": 0.0189125,
+        "p95": 0.03685
+      },
+      "boundary_thresholds_passed": true
+    },
+    "evaluation": {
+      "matrix": {
+        "new": {
+          "new": 16,
+          "continue": 0,
+          "ambiguous": 0
+        },
+        "continue": {
+          "new": 0,
+          "continue": 15,
+          "ambiguous": 0
+        },
+        "ambiguous": {
+          "new": 0,
+          "continue": 0,
+          "ambiguous": 16
+        }
+      },
+      "by_language": {
+        "pt": {
+          "new": {
+            "new": 8,
+            "continue": 0,
+            "ambiguous": 0
+          },
+          "continue": {
+            "new": 0,
+            "continue": 8,
+            "ambiguous": 0
+          },
+          "ambiguous": {
+            "new": 0,
+            "continue": 0,
+            "ambiguous": 8
+          }
+        },
+        "en": {
+          "new": {
+            "new": 8,
+            "continue": 0,
+            "ambiguous": 0
+          },
+          "continue": {
+            "new": 0,
+            "continue": 7,
+            "ambiguous": 0
+          },
+          "ambiguous": {
+            "new": 0,
+            "continue": 0,
+            "ambiguous": 8
+          }
+        }
+      },
+      "errors": [],
+      "scored_cases": 47,
+      "excluded_development_overlap_ids": [
+        "v2-eval-26"
+      ],
+      "true_positives": 16,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "ambiguity_abstention_passed": true,
+      "continuation_preservation_passed": true,
+      "latency_ms": {
+        "p50": 0.022159,
+        "p95": 0.032641
+      },
+      "boundary_thresholds_passed": true
+    }
+  }
+}
