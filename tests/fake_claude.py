@@ -70,9 +70,16 @@ def hook(event, payload):
         for handler in entry["hooks"]:
             result = subprocess.run(handler["command"], shell=True, input=json.dumps(payload),
                                     text=True, capture_output=True)
+            if event == "UserPromptSubmit" and result.stdout:
+                output = json.loads(result.stdout)
+                if output.get("decision") == "block":
+                    return False
+                if set(output) == {"systemMessage"}:
+                    continue
             if result.returncode or result.stdout or result.stderr:
                 print("Hook was not silent", file=sys.stderr)
                 sys.exit(90)
+    return True
 
 
 if not os.environ.get("FAKE_NO_HOOKS"):
@@ -83,6 +90,21 @@ if os.environ.get("FAKE_MANUAL_MODEL"):
 if os.environ.get("FAKE_AUTO_MODEL"):
     hook("PostModelSwitch", dict(payload, hook_event_name="PostModelSwitch",
                                  to_model=os.environ["FAKE_AUTO_MODEL"], source="auto"))
+if os.environ.get("FAKE_CHAT_PLAN"):
+    if os.environ.get("FAKE_IGNORE_TERM"):
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    index = len(Path(os.environ["FAKE_LOG"]).read_text().splitlines()) - 1
+    plan = json.loads(os.environ["FAKE_CHAT_PLAN"])
+    messages = ([args[-1]] if "--" in args else []) + (plan[index] if index < len(plan) else [])
+    for message in messages:
+        if isinstance(message, dict):
+            active = message["model"]
+            hook("PostModelSwitch", dict(payload, hook_event_name="PostModelSwitch",
+                 to_model=active, requested_model=active, source="picker"))
+            continue
+        if hook("UserPromptSubmit", dict(payload, hook_event_name="UserPromptSubmit", prompt=message)):
+            with open(os.environ["FAKE_EXECUTED_LOG"], "a") as out:
+                out.write(json.dumps(dict(session_id=session, model=active, prompt=message)) + "\n")
 if os.environ.get("FAKE_SIGINT_CONTINUE"):
     interrupts = 0
 

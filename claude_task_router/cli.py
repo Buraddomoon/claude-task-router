@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import sqlite3
 import subprocess
 import sys
@@ -13,7 +14,7 @@ from . import __version__
 from .boundary import choose
 from .classifier import Decision, classify, validate_prompt
 from .config import MAX_PROMPT_BYTES, TIERS, load_config, validate_model
-from .launcher import doctor, executable, run, validate_extra, validate_timeout
+from .launcher import doctor, executable, run, run_conversation, validate_extra, validate_timeout
 from .state import Store, default_state_dir, launch_model
 
 
@@ -39,6 +40,8 @@ def parser():
         manual.add_argument("--model", help="Ignora classificação e fixa este modelo")
         manual.add_argument("--tier", choices=TIERS)
         if name in {"new", "run"}:
+            sub.add_argument("--conversation-routing", action="store_true",
+                             help="Fronteiras explícitas na conversa nativa (experimental; Claude 2.1.295+)")
             sub.add_argument("--dry-run", action="store_true", help="Planejar sem persistir ou executar")
             sub.add_argument("--timeout", type=float, help="Tempo limite do launcher em segundos; exige modo print")
         else:
@@ -55,6 +58,7 @@ def parser():
     resume.add_argument("--model")
     resume.add_argument("--dry-run", action="store_true")
     resume.add_argument("--timeout", type=float)
+    resume.add_argument("--conversation-routing", action="store_true")
     recover = subs.add_parser("recover", help="Abrir sessão substituta com a escolha salva, sem histórico")
     recover.add_argument("task")
     recover.add_argument("prompt", nargs="?", help="Contexto para a nova sessão; não reenvia a conversa anterior")
@@ -62,6 +66,7 @@ def parser():
     recover.add_argument("--cwd", type=Path, help="Diretório substituto; padrão: projeto original")
     recover.add_argument("--dry-run", action="store_true")
     recover.add_argument("--timeout", type=float)
+    recover.add_argument("--conversation-routing", action="store_true")
     model = subs.add_parser("model", help="Fixar modelo de uma tarefa inativa")
     model.add_argument("task")
     model.add_argument("model")
@@ -143,6 +148,15 @@ def main(argv=None) -> int:
     try:
         validate_extra(extra)
         validate_timeout(extra, getattr(args, "timeout", None))
+        if getattr(args, "conversation_routing", False):
+            if any(x in {"-p", "--print"} for x in extra):
+                raise ValueError("--conversation-routing exige o Claude interativo.")
+            if not getattr(args, "dry_run", False):
+                version = subprocess.run([args.claude_bin, "--version"], capture_output=True,
+                                         text=True, timeout=15, check=True)
+                match = re.search(r"\b(\d+)\.(\d+)\.(\d+)\b", version.stdout)
+                if not match or tuple(map(int, match.groups())) < (2, 1, 295):
+                    raise ValueError("--conversation-routing exige Claude Code 2.1.295+.")
         if extra and args.command not in {"new", "resume", "recover", "run"}:
             raise ValueError("Argumentos Claude são aceitos somente em new/resume/recover.")
         if args.command == "run":
@@ -226,6 +240,8 @@ def main(argv=None) -> int:
             binary = executable(args.claude_bin)
             store = Store(args.state_dir)
             task = store.create(cwd, prompt, decision.to_dict(), config.snapshot())
+            if args.conversation_routing:
+                return run_conversation(store, task, binary, prompt, extra, resume=False)
             with store.task_lock(task["id"]):
                 return run(store, task, binary, prompt, extra, resume=False, timeout=args.timeout)
         store = Store(args.state_dir)
@@ -269,6 +285,8 @@ def main(argv=None) -> int:
                 replacement = store.recover(task["id"], cwd, prompt)
             print(f"[ctr] recuperação de {task['id']} → {replacement['id']}; "
                   "nova sessão sem histórico anterior, escolha salva preservada.", file=sys.stderr)
+            if args.conversation_routing:
+                return run_conversation(store, replacement, binary, prompt, extra, resume=False)
             with store.task_lock(replacement["id"]):
                 return run(store, replacement, binary, prompt, extra, resume=False, timeout=args.timeout)
         if args.command == "resume":
@@ -280,6 +298,8 @@ def main(argv=None) -> int:
                           reclassified=False, persisted=False))
                 return 0
             binary = executable(args.claude_bin)
+            if args.conversation_routing:
+                return run_conversation(store, task, binary, prompt, extra, resume=True, override=args.model)
             with store.task_lock(task["id"]):
                 if args.model:
                     store.set_model(task["id"], args.model, source="resume_override")

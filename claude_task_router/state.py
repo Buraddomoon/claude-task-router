@@ -111,7 +111,8 @@ class Store:
         finally:
             db.close()
 
-    def create(self, cwd: Path, prompt: str, decision: dict, config: dict) -> dict:
+    def create(self, cwd: Path, prompt: str, decision: dict, config: dict,
+               previous: str | None = None) -> dict:
         task_id = str(uuid.uuid4())
         model = validate_model(decision["model"])
         timestamp = now()
@@ -124,6 +125,15 @@ class Store:
                  hashlib.sha256(prompt.encode()).hexdigest(), len(prompt), timestamp, timestamp))
             db.execute("INSERT INTO events(task_id,at,kind,model,source) VALUES(?,?,?,?,?)",
                        (task_id, timestamp, "created", model, decision["policy"]))
+            if previous is not None:
+                origin = db.execute("SELECT execution_id,finished_at FROM tasks WHERE id=?",
+                                    (previous,)).fetchone()
+                if origin is None or origin["finished_at"] is None:
+                    raise ValueError("A tarefa anterior deve estar preservada e parada.")
+                db.execute("INSERT INTO events(task_id,at,kind,source,execution_id) VALUES(?,?,?,?,?)",
+                           (previous, timestamp, "handoff_to", task_id, origin["execution_id"]))
+                db.execute("INSERT INTO events(task_id,at,kind,source) VALUES(?,?,?,?)",
+                           (task_id, timestamp, "handoff_from", previous))
         return self.get(task_id)
 
     def recover(self, task_id: str, cwd: Path, prompt: str) -> dict:

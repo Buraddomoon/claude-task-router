@@ -112,13 +112,26 @@ O launcher passa `switchModelsOnFlag: false` nos settings da execução: o contr
 
 A troca automática de assunto dentro da conversa (#32) foi investigada na
 [ADR de viabilidade](docs/adr/0001-conversation-task-boundaries.md), com
-[prova nativa](docs/native-boundary-feasibility.md). A implementação está
-bloqueada pela ausência de controle público demonstrado para coordenar modelo
-e nova sessão antes da execução; essa capacidade continua pendente.
+[prova nativa inicial](docs/native-boundary-feasibility.md). Uma
+[segunda prova com supervisão do processo](docs/native-supervisor-proof.md)
+permitiu implementar um modo experimental no checkout `main`:
 
-- Uma nova tarefa gerenciada começa em `ctr new`. Para mudar de assunto com nova classificação, saia do Claude e use esse comando novamente.
+```bash
+ctr new "Sua tarefa inicial" --conversation-routing
+# Dentro do Claude aberto, digite: Nova tarefa: implemente outro objetivo
+```
+
+Exige Claude 2.1.295+. O supervisor reinicia a TUI no mesmo terminal, preserva
+a tarefa anterior e classifica a nova uma única vez. Continuações mantêm a
+escolha, inclusive manual. Sem fronteira clara, mostra aviso e preserva a tarefa.
+Só marcadores explícitos são reconhecidos nesta etapa; a avaliação reservada
+teve recall de 25% para novas tarefas. A #32 continua aberta. macOS nativo e
+eventos de agentes/agendamentos não foram homologados neste modo. A tag v1.1.0
+não contém esta opção; use o checkout `main` e reinstale para experimentá-la.
+
+- No modo padrão, uma nova tarefa gerenciada começa em `ctr new`. Para mudar de assunto com nova classificação, saia do Claude e use esse comando novamente.
 - `/clear`, `/resume` e forks dentro do Claude seguem a semântica nativa e não criam tarefas no roteador. Para continuar uma tarefa gerenciada, use `ctr resume` após sair.
-- O launcher não reclassifica mensagens, não faz escalonamento no meio da tarefa e não configura fallback. O Claude/provedor ainda pode fazer substituições internas, inclusive em plan mode com Haiku. Para uma execução estritamente fixa, revise essas políticas nativas no seu ambiente.
+- O launcher não reclassifica continuações nem configura fallback. O modo experimental classifica somente após uma fronteira reconhecida e a saída do cliente anterior. O Claude/provedor ainda pode fazer substituições internas, inclusive em plan mode com Haiku. Para uma execução estritamente fixa, revise essas políticas nativas no seu ambiente.
 - Se hooks estiverem desativados por configuração/política, a sincronização automática não funciona; use ID explícito e `ctr model`. A ausência de observação é visível em `ctr show` e em stderr. O modelo efetivo é uma observação de sessão, não uma garantia sobre cada resposta: cadeias nativas de fallback por turno podem não disparar PostModelSwitch.
 - Se o Claude falhar antes de salvar a conversa, a retomada nativa pode não encontrá-la. O roteador preserva metadados e código de erro, sem repetir a chamada. `ctr recover UUID` abre explicitamente outra sessão com a escolha/ID fixado, tier e configuração salvos, sem reclassificar. Forneça o contexto atual por argumento ou `--prompt-file`: o histórico anterior não é copiado. `--cwd` permite escolher um projeto substituto; a tarefa original permanece intacta e o evento `recovered_from` vincula as duas. `recover --dry-run` permite revisar sem executar.
 - O banco privado contém metadados, hash/tamanho do prompt e caminho da transcrição; não contém o texto do prompt nem o conteúdo das conversas. O Claude continua mantendo seu próprio histórico. Não há telemetria adicionada pelo roteador.

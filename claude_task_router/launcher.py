@@ -8,6 +8,7 @@ import re
 import shlex
 import shutil
 import signal
+import sqlite3
 import subprocess
 import sys
 import time
@@ -60,22 +61,29 @@ def executable(binary: str) -> str:
     return str(Path(resolved).absolute())
 
 
-def hook_settings(state_dir: Path, execution_id: str) -> str:
+def hook_settings(state_dir: Path, execution_id: str, gate=None) -> str:
     command = shlex.join([sys.executable, str(Path(__file__).with_name("hook.py").resolve()),
                           "--state-dir", str(state_dir), "--execution-id", execution_id])
-    return json.dumps({"switchModelsOnFlag": False, "hooks": {
+    settings = {"switchModelsOnFlag": False, "hooks": {
         event: [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}]
         for event in ("SessionStart", "PostModelSwitch")
-    }}, separators=(",", ":"))
+    }}
+    if gate:
+        command = shlex.join([sys.executable,
+            str(Path(__file__).with_name("conversation_hook.py").resolve()),
+            "--socket", gate.path, "--token", gate.token, "--execution-id", execution_id])
+        settings["hooks"]["UserPromptSubmit"] = [{"hooks": [{"type": "command",
+            "command": command, "timeout": 10, "onFailure": "block"}]}]
+    return json.dumps(settings, separators=(",", ":"))
 
 
 def build_command(binary: str, task: dict, state_dir: Path, prompt: str | None,
-                  extra: list[str], resume: bool) -> list[str]:
+                  extra: list[str], resume: bool, gate=None) -> list[str]:
     validate_extra(extra)
     model = validate_model(launch_model(task))
     command = [binary, "--model", model,
                "--resume" if resume else "--session-id", task["id"],
-               "--settings", hook_settings(state_dir, task["execution_id"]), *extra]
+               "--settings", hook_settings(state_dir, task["execution_id"], gate), *extra]
     if prompt is not None:
         # Prevent leading dashes in user text from becoming Claude CLI flags.
         command.extend(["--", prompt])
@@ -94,7 +102,7 @@ def run(store, task: dict, binary: str, prompt: str | None, extra: list[str], re
         return _run(store, task, binary, prompt, extra, resume, timeout)
 
 
-def _run(store, task, binary, prompt, extra, resume, timeout):
+def _run(store, task, binary, prompt, extra, resume, timeout, conversation=False):
     cwd = Path(task["cwd"])
     if not cwd.is_dir():
         raise ValueError(f"Diretório original não existe: {cwd}. Restaure-o ou use "
@@ -103,7 +111,21 @@ def _run(store, task, binary, prompt, extra, resume, timeout):
     validate_timeout(extra, timeout)
     store.launched(task["id"])
     task = store.get(task["id"])
-    command = build_command(binary, task, store.root, prompt, extra, resume)
+    if conversation:
+        from .conversation import PromptGate
+        try:
+            gate = PromptGate(task, prompt)
+        except (OSError, ValueError):
+            store.finished(task["id"], 2)
+            raise
+        with gate:
+            return _execute(store, task, binary, prompt, extra, resume, timeout, gate)
+    return _execute(store, task, binary, prompt, extra, resume, timeout)
+
+
+def _execute(store, task, binary, prompt, extra, resume, timeout, gate=None):
+    cwd = Path(task["cwd"])
+    command = build_command(binary, task, store.root, prompt, extra, resume, gate)
     print(f"[ctr] tarefa={task['id']} solicitado={task['model']} modelo={launch_model(task)} "
           f"{'retomada' if resume else 'nova'}", file=sys.stderr)
     # Inherit terminal and environment; Claude retains its own auth and permissions.
@@ -117,6 +139,10 @@ def _run(store, task, binary, prompt, extra, resume, timeout):
     handlers = {}
     deadline = time.monotonic() + timeout if timeout is not None else None
     timed_out = False
+    pending = None
+    cancelled = False
+    stop_deadline = None
+    forced = False
 
     def send(signum):
         try:
@@ -128,6 +154,8 @@ def _run(store, task, binary, prompt, extra, resume, timeout):
             pass
 
     def forward(signum, _frame):
+        nonlocal cancelled
+        cancelled = True
         if child.poll() is None:
             send(signum)
     for signum in (signal.SIGTERM, signal.SIGHUP):
@@ -135,10 +163,24 @@ def _run(store, task, binary, prompt, extra, resume, timeout):
     try:
         while True:
             try:
+                if gate and not cancelled and pending is None:
+                    pending = gate.poll()
+                    if pending:
+                        # The submitting hook is still waiting: inference cannot
+                        # race the termination of the old client.
+                        send(signal.SIGTERM)
+                        stop_deadline = time.monotonic() + 5
+                if stop_deadline and time.monotonic() >= stop_deadline:
+                    forced = True
+                    send(signal.SIGKILL)
                 remaining = max(0, deadline - time.monotonic()) if deadline is not None else None
+                if gate:
+                    remaining = min(remaining, 0.05) if remaining is not None else 0.05
                 result = child.wait(timeout=remaining)
                 break
             except subprocess.TimeoutExpired:
+                if gate and (deadline is None or time.monotonic() < deadline):
+                    continue
                 timed_out = True
                 send(signal.SIGTERM)
                 try:
@@ -148,6 +190,7 @@ def _run(store, task, binary, prompt, extra, resume, timeout):
                     result = child.wait()
                 break
             except KeyboardInterrupt:
+                cancelled = True
                 # Terminal SIGINT already reaches Claude. Keep supervising it so a
                 # second launcher cannot acquire the lock while it is still alive.
                 if print_mode:
@@ -163,7 +206,8 @@ def _run(store, task, binary, prompt, extra, resume, timeout):
                 child.wait()
         for signum, previous in handlers.items():
             signal.signal(signum, previous)
-    code = 124 if timed_out else result if result >= 0 else 128 - result
+    handoff = pending if not cancelled and not forced and result in (0, 143, -signal.SIGTERM) else None
+    code = 0 if handoff else 124 if timed_out else result if result >= 0 else 128 - result
     if timed_out:
         print("[ctr] Tempo limite excedido; grupo do cliente print encerrado, sem repetição automática.", file=sys.stderr)
     store.finished(task["id"], code)
@@ -184,7 +228,36 @@ def _run(store, task, binary, prompt, extra, resume, timeout):
               f"Tente ctr resume {task['id']}; se a sessão não existir, use "
               f"ctr recover {task['id']} --prompt-file tarefa.txt para abrir outra sessão "
               "com a mesma escolha. Nenhuma repetição automática foi feita.", file=sys.stderr)
-    return code
+    return handoff or code
+
+
+def run_conversation(store, task, binary, prompt, extra, resume, override=None):
+    """Release the old task lock before starting its independent successor."""
+    from .classifier import classify
+    from .config import Config
+    from .conversation import Handoff
+    with installation_lease():
+        while True:
+            with store.task_lock(task["id"]):
+                if override:
+                    store.set_model(task["id"], override, source="resume_override")
+                    override = None
+                task = store.get(task["id"])
+                outcome = _run(store, task, binary, prompt, extra, resume, None, conversation=True)
+                if isinstance(outcome, Handoff):
+                    prompt = outcome.prompt
+                    try:
+                        decision = classify(prompt, Config(**task["config"]))
+                        successor = store.create(Path(task["cwd"]), prompt, decision.to_dict(),
+                                                 task["config"], previous=task["id"])
+                    except (OSError, ValueError, sqlite3.Error) as exc:
+                        raise ValueError(f"Nova tarefa não iniciada; anterior {task['id']} preservada. "
+                                         "Retome pelo ctr e reenvie o pedido.") from exc
+            if not isinstance(outcome, Handoff):
+                return outcome
+            print(f"[ctr] nova tarefa {successor['id']}; anterior {task['id']} preservada. "
+                  f"Retome com ctr resume {task['id']}.", file=sys.stderr)
+            task, resume = successor, False
 
 
 def doctor(binary: str) -> tuple[dict, int]:
