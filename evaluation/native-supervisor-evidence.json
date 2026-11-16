@@ -1,0 +1,257 @@
+{
+  "recorded_on": "2026-11-16",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "python": "3.14.3",
+  "claude_version": "2.1.325",
+  "scope": "experimental explicit boundaries; not full issue 32 acceptance",
+  "source_sha256": {
+    "claude_task_router/conversation.py": "774e26871682e3f5e98859b7d76fb9fa81e1940cd57d10146c0d09d9f9ca9ea5",
+    "claude_task_router/conversation_hook.py": "3c64788de72a187c20fdd030666603c8399c917c42ca1d7ac85fd954b7a8d9c4",
+    "claude_task_router/launcher.py": "c7f53068925cec9f5a10ea06fc5405ca4248b1ee63bdde76122d7791fc2a3459",
+    "claude_task_router/state.py": "9fa045231bfaa165d5eb786aa2612f0dcb3f0fa348265f15096ec8196c31e57f",
+    "claude_task_router/cli.py": "4da06428e8d01f9b818232075846329b53af4746477faf91dbb1c76660ce464b"
+  },
+  "native_runs": [
+    {
+      "role": "PT handoff, manual picker, continuation and resume",
+      "tasks": [
+        {
+          "id": "17d8c0f8-46c9-4b02-96dd-28581b14c6e5",
+          "model": "haiku",
+          "initial_model": "sonnet",
+          "effective_model": "claude-haiku-5-5",
+          "resolved_model": "claude-haiku-5-5",
+          "created_at": "2026-11-16T12:45:27.797808+00:00",
+          "last_launched_at": "2026-11-16T12:45:27.799143+00:00",
+          "finished_at": "2026-11-16T12:47:58.760559+00:00",
+          "last_exit_code": 0,
+          "launches": 1,
+          "choice_revision": 1,
+          "events": [
+            {
+              "at": "2026-11-16T12:45:27.797808+00:00",
+              "kind": "created",
+              "model": "sonnet",
+              "source": "local-rules-v4",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T12:45:27.798614+00:00",
+              "kind": "handoff_from",
+              "model": null,
+              "source": "a22a9edb-7bcf-45af-a6b6-a341b0f41018",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T12:45:28.113802+00:00",
+              "kind": "SessionStart",
+              "model": "claude-sonnet-5-5",
+              "source": "startup",
+              "execution_id": "9d3d13ea-941c-444f-ba0a-e1827606a2ef"
+            },
+            {
+              "at": "2026-11-16T12:47:14.800016+00:00",
+              "kind": "PostModelSwitch",
+              "model": "claude-haiku-5-5",
+              "source": "picker",
+              "execution_id": "9d3d13ea-941c-444f-ba0a-e1827606a2ef"
+            }
+          ]
+        },
+        {
+          "id": "a22a9edb-7bcf-45af-a6b6-a341b0f41018",
+          "model": "haiku",
+          "initial_model": "haiku",
+          "effective_model": null,
+          "resolved_model": "claude-haiku-5-5",
+          "created_at": "2026-11-16T12:45:16.144742+00:00",
+          "last_launched_at": "2026-11-16T12:48:24.222766+00:00",
+          "finished_at": "2026-11-16T12:49:22.415471+00:00",
+          "last_exit_code": 0,
+          "launches": 2,
+          "choice_revision": 0,
+          "events": [
+            {
+              "at": "2026-11-16T12:45:16.144742+00:00",
+              "kind": "created",
+              "model": "haiku",
+              "source": "manual",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T12:45:16.470127+00:00",
+              "kind": "SessionStart",
+              "model": "claude-haiku-5-5",
+              "source": "startup",
+              "execution_id": "313d08a6-8174-49fc-9590-c8509ca604e1"
+            },
+            {
+              "at": "2026-11-16T12:45:27.798486+00:00",
+              "kind": "handoff_to",
+              "model": null,
+              "source": "17d8c0f8-46c9-4b02-96dd-28581b14c6e5",
+              "execution_id": "313d08a6-8174-49fc-9590-c8509ca604e1"
+            },
+            {
+              "at": "2026-11-16T12:48:24.550654+00:00",
+              "kind": "SessionStart",
+              "model": null,
+              "source": "resume",
+              "execution_id": "e1fc5531-f016-4d23-8ea7-aff315424e1b"
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "at": "2026-11-16T12:45:33.165Z",
+          "session_id": "17d8c0f8-46c9-4b02-96dd-28581b14c6e5",
+          "model": "claude-sonnet-5-5",
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 6,
+            "cache_creation_input_tokens": 2422,
+            "cache_read_input_tokens": 645
+          }
+        },
+        {
+          "at": "2026-11-16T12:47:17.002Z",
+          "session_id": "17d8c0f8-46c9-4b02-96dd-28581b14c6e5",
+          "model": "claude-haiku-5-5",
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 5,
+            "cache_creation_input_tokens": 33832,
+            "cache_read_input_tokens": 0
+          }
+        },
+        {
+          "at": "2026-11-16T12:45:20.394Z",
+          "session_id": "a22a9edb-7bcf-45af-a6b6-a341b0f41018",
+          "model": "claude-haiku-5-5",
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 793,
+            "cache_creation_input_tokens": 3237,
+            "cache_read_input_tokens": 645
+          }
+        }
+      ],
+      "locks_released": true,
+      "sqlite_integrity": "ok"
+    },
+    {
+      "role": "EN handoff on final source",
+      "tasks": [
+        {
+          "id": "9bbbd562-afc2-4743-bb36-b8812e3a395c",
+          "model": "haiku",
+          "initial_model": "haiku",
+          "effective_model": "claude-haiku-5-5",
+          "resolved_model": "claude-haiku-5-5",
+          "created_at": "2026-11-16T12:49:53.963354+00:00",
+          "last_launched_at": "2026-11-16T12:49:53.968878+00:00",
+          "finished_at": "2026-11-16T12:51:38.093744+00:00",
+          "last_exit_code": 0,
+          "launches": 1,
+          "choice_revision": 0,
+          "events": [
+            {
+              "at": "2026-11-16T12:49:53.963354+00:00",
+              "kind": "created",
+              "model": "haiku",
+              "source": "manual",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T12:49:54.319936+00:00",
+              "kind": "SessionStart",
+              "model": "claude-haiku-5-5",
+              "source": "startup",
+              "execution_id": "a4fbd4c8-f05e-4ff5-9510-73e6252e0766"
+            },
+            {
+              "at": "2026-11-16T12:51:38.095304+00:00",
+              "kind": "handoff_to",
+              "model": null,
+              "source": "735a6bd6-293e-4173-8f64-942481664e2c",
+              "execution_id": "a4fbd4c8-f05e-4ff5-9510-73e6252e0766"
+            }
+          ]
+        },
+        {
+          "id": "735a6bd6-293e-4173-8f64-942481664e2c",
+          "model": "sonnet",
+          "initial_model": "sonnet",
+          "effective_model": "claude-sonnet-5-5",
+          "resolved_model": "claude-sonnet-5-5",
+          "created_at": "2026-11-16T12:51:38.095304+00:00",
+          "last_launched_at": "2026-11-16T12:51:38.096810+00:00",
+          "finished_at": "2026-11-16T12:52:43.932843+00:00",
+          "last_exit_code": 0,
+          "launches": 1,
+          "choice_revision": 0,
+          "events": [
+            {
+              "at": "2026-11-16T12:51:38.095304+00:00",
+              "kind": "created",
+              "model": "sonnet",
+              "source": "local-rules-v4",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T12:51:38.095304+00:00",
+              "kind": "handoff_from",
+              "model": null,
+              "source": "9bbbd562-afc2-4743-bb36-b8812e3a395c",
+              "execution_id": null
+            },
+            {
+              "at": "2026-11-16T12:51:38.418790+00:00",
+              "kind": "SessionStart",
+              "model": "claude-sonnet-5-5",
+              "source": "startup",
+              "execution_id": "0c4940f4-3505-451c-9a35-5a73245f36b6"
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "at": "2026-11-16T12:49:55.662Z",
+          "session_id": "9bbbd562-afc2-4743-bb36-b8812e3a395c",
+          "model": "claude-haiku-5-5",
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 6,
+            "cache_creation_input_tokens": 841,
+            "cache_read_input_tokens": 3041
+          }
+        },
+        {
+          "at": "2026-11-16T12:51:40.248Z",
+          "session_id": "735a6bd6-293e-4173-8f64-942481664e2c",
+          "model": "claude-sonnet-5-5",
+          "tool_use_blocks": 0,
+          "tokens": {
+            "input_tokens": 2,
+            "output_tokens": 5,
+            "cache_creation_input_tokens": 817,
+            "cache_read_input_tokens": 2238
+          }
+        }
+      ],
+      "locks_released": true,
+      "sqlite_integrity": "ok"
+    }
+  ],
+  "classification_inference_calls": 0,
+  "router_added_routing_context_characters": 0,
+  "automatic_remote_retries": 0,
+  "source_sha256_scope": "Final EN handoff. PT run preceded atomic successor refinement; both use the same prompt gate."
+}

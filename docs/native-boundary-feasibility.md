@@ -1,5 +1,10 @@
 # Viabilidade nativa — #38
 
+Este é o relatório da investigação inicial. A conclusão de bloqueio foi
+revista após a [prova com supervisor POSIX](native-supervisor-proof.md), que
+demonstrou uma alternativa sem setter de modelo no hook. Os eventos e
+resultados históricos abaixo continuam válidos.
+
 Executado em 16/11/2026, 12:23–12:24 UTC, Linux x86_64, Python 3.14.3,
 Claude Code 2.1.325, PTY real e autenticação existente. A
 [ADR 0001](adr/0001-conversation-task-boundaries.md) registra a decisão.
