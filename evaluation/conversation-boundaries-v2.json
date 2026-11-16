@@ -1,0 +1,783 @@
+{
+  "schema_version": 2,
+  "frozen_at": "2026-11-16T13:16:25+00:00",
+  "issue": 40,
+  "labels": [
+    "new",
+    "continue",
+    "ambiguous"
+  ],
+  "provenance": "V1 evaluation is now development only. New public evaluation frozen before contextual detector implementation; not independently authored or blind.",
+  "development": [
+    {
+      "id": "dev-01",
+      "language": "pt",
+      "previous_task": "Corrigir typo no README.",
+      "prompt": "Nova tarefa: implemente autenticação OAuth.",
+      "expected": "new",
+      "rationale": "Fronteira explícita e objetivo independente."
+    },
+    {
+      "id": "dev-02",
+      "language": "pt",
+      "previous_task": "Traduzir a tela de login.",
+      "prompt": "Outro assunto: investigue um deadlock no worker.",
+      "expected": "new",
+      "rationale": "Mudança explícita de assunto."
+    },
+    {
+      "id": "dev-03",
+      "language": "pt",
+      "previous_task": "Formatar documentação.",
+      "prompt": "Planeje agora a migração do banco de clientes.",
+      "expected": "new",
+      "rationale": "Objetivo independente, sem marcador padronizado."
+    },
+    {
+      "id": "dev-04",
+      "language": "pt",
+      "previous_task": "Adicionar testes ao parser.",
+      "prompt": "Terminamos o parser. Quero criar uma página de preços.",
+      "expected": "new",
+      "rationale": "Encerramento explícito e outro objetivo."
+    },
+    {
+      "id": "dev-05",
+      "language": "en",
+      "previous_task": "Fix a README typo.",
+      "prompt": "New task: implement a payment webhook.",
+      "expected": "new",
+      "rationale": "Explicit independent task."
+    },
+    {
+      "id": "dev-06",
+      "language": "en",
+      "previous_task": "Translate login labels.",
+      "prompt": "Switching topics: investigate database corruption.",
+      "expected": "new",
+      "rationale": "Explicit topic switch."
+    },
+    {
+      "id": "dev-07",
+      "language": "en",
+      "previous_task": "Format a markdown table.",
+      "prompt": "Design a job scheduler for the billing service.",
+      "expected": "new",
+      "rationale": "Independent objective without a fixed marker."
+    },
+    {
+      "id": "dev-08",
+      "language": "en",
+      "previous_task": "Add parser tests.",
+      "prompt": "That is finished. Build a pricing page next.",
+      "expected": "new",
+      "rationale": "Completion followed by an independent request."
+    },
+    {
+      "id": "dev-09",
+      "language": "pt",
+      "previous_task": "Corrigir o parser e seus testes.",
+      "prompt": "Continue com os testes do parser.",
+      "expected": "continue",
+      "rationale": "Continuação explícita do mesmo objetivo."
+    },
+    {
+      "id": "dev-10",
+      "language": "pt",
+      "previous_task": "Corrigir o parser e seus testes.",
+      "prompt": "Agora valide o resultado.",
+      "expected": "continue",
+      "rationale": "Referência ao resultado da tarefa atual."
+    },
+    {
+      "id": "dev-11",
+      "language": "pt",
+      "previous_task": "Documentar mensagens de um chat.",
+      "prompt": "Traduza o exemplo citado: 'nova tarefa'.",
+      "expected": "continue",
+      "rationale": "Marcador citado como dado da documentação."
+    },
+    {
+      "id": "dev-12",
+      "language": "pt",
+      "previous_task": "Corrigir o parser e seus testes.",
+      "prompt": "Não abra outra tarefa; corrija também o teste que falhou.",
+      "expected": "continue",
+      "rationale": "Negação de fronteira e trabalho da mesma tarefa."
+    },
+    {
+      "id": "dev-13",
+      "language": "en",
+      "previous_task": "Fix the parser and its tests.",
+      "prompt": "Carry on with the parser tests.",
+      "expected": "continue",
+      "rationale": "Explicit continuation."
+    },
+    {
+      "id": "dev-14",
+      "language": "en",
+      "previous_task": "Fix the parser and its tests.",
+      "prompt": "Now check the result.",
+      "expected": "continue",
+      "rationale": "Refers to the current result."
+    },
+    {
+      "id": "dev-15",
+      "language": "en",
+      "previous_task": "Document chat message examples.",
+      "prompt": "Translate the quoted example 'new topic'.",
+      "expected": "continue",
+      "rationale": "Marker is quoted data for current documentation."
+    },
+    {
+      "id": "dev-16",
+      "language": "en",
+      "previous_task": "Fix the parser and its tests.",
+      "prompt": "Do not start a new task; add the missing parser test.",
+      "expected": "continue",
+      "rationale": "Negated boundary and related work."
+    },
+    {
+      "id": "dev-17",
+      "language": "pt",
+      "previous_task": "Corrigir uma falha no checkout.",
+      "prompt": "E a autenticação?",
+      "expected": "ambiguous",
+      "rationale": "Pode ser dependência do checkout ou outro objetivo."
+    },
+    {
+      "id": "dev-18",
+      "language": "pt",
+      "previous_task": "Corrigir uma falha no checkout.",
+      "prompt": "Vamos mudar isso.",
+      "expected": "ambiguous",
+      "rationale": "Referente e alcance não determinados."
+    },
+    {
+      "id": "dev-19",
+      "language": "pt",
+      "previous_task": "Corrigir uma falha no checkout.",
+      "prompt": "Nova tarefa? Talvez seja melhor terminar primeiro.",
+      "expected": "ambiguous",
+      "rationale": "Pergunta e hesitação, sem fronteira confirmada."
+    },
+    {
+      "id": "dev-20",
+      "language": "pt",
+      "previous_task": "Corrigir uma falha no checkout.",
+      "prompt": "Continue os testes e depois talvez faça outro serviço.",
+      "expected": "ambiguous",
+      "rationale": "Instrução composta com futuro objetivo indefinido."
+    },
+    {
+      "id": "dev-21",
+      "language": "en",
+      "previous_task": "Fix a checkout failure.",
+      "prompt": "What about authentication?",
+      "expected": "ambiguous",
+      "rationale": "May be related to checkout or independent."
+    },
+    {
+      "id": "dev-22",
+      "language": "en",
+      "previous_task": "Fix a checkout failure.",
+      "prompt": "Let's change that.",
+      "expected": "ambiguous",
+      "rationale": "Unspecified referent and scope."
+    },
+    {
+      "id": "dev-23",
+      "language": "en",
+      "previous_task": "Fix a checkout failure.",
+      "prompt": "New task? Maybe finish this one first.",
+      "expected": "ambiguous",
+      "rationale": "Question and hesitation do not confirm a boundary."
+    },
+    {
+      "id": "dev-24",
+      "language": "en",
+      "previous_task": "Fix a checkout failure.",
+      "prompt": "Continue testing and perhaps build another service later.",
+      "expected": "ambiguous",
+      "rationale": "Composite request with unspecified future work."
+    },
+    {
+      "id": "eval-01",
+      "language": "pt",
+      "previous_task": "Renomear uma variável de teste.",
+      "prompt": "Novo assunto: projete um sistema de auditoria de pagamentos.",
+      "expected": "new",
+      "rationale": "Mudança explícita para objetivo independente."
+    },
+    {
+      "id": "eval-02",
+      "language": "pt",
+      "previous_task": "Revisar a tradução do menu.",
+      "prompt": "A tradução está pronta. Investigue o consumo de memória do worker.",
+      "expected": "new",
+      "rationale": "Fim da tarefa e investigação independente."
+    },
+    {
+      "id": "eval-03",
+      "language": "pt",
+      "previous_task": "Ajustar a cor do rodapé.",
+      "prompt": "Preciso migrar os registros de clientes para um novo banco.",
+      "expected": "new",
+      "rationale": "Mudança livre de assunto sem marcador lexical."
+    },
+    {
+      "id": "eval-04",
+      "language": "pt",
+      "previous_task": "Validar o parser de datas.",
+      "prompt": "Deixe o parser salvo para retomarmos depois. Crie agora uma rotina de backup.",
+      "expected": "new",
+      "rationale": "Suspensão explícita e objetivo independente."
+    },
+    {
+      "id": "eval-05",
+      "language": "en",
+      "previous_task": "Rename a test variable.",
+      "prompt": "New topic: design a payment audit system.",
+      "expected": "new",
+      "rationale": "Explicit independent objective."
+    },
+    {
+      "id": "eval-06",
+      "language": "en",
+      "previous_task": "Review menu translations.",
+      "prompt": "The translation is done. Investigate worker memory usage.",
+      "expected": "new",
+      "rationale": "Completion followed by unrelated investigation."
+    },
+    {
+      "id": "eval-07",
+      "language": "en",
+      "previous_task": "Adjust the footer color.",
+      "prompt": "I need to migrate customer records to another database.",
+      "expected": "new",
+      "rationale": "Free topic change without a boundary marker."
+    },
+    {
+      "id": "eval-08",
+      "language": "en",
+      "previous_task": "Validate the date parser.",
+      "prompt": "Keep the parser work for later. Create a backup routine now.",
+      "expected": "new",
+      "rationale": "Explicit suspension and independent objective."
+    },
+    {
+      "id": "eval-09",
+      "language": "pt",
+      "previous_task": "Corrigir o parser de datas.",
+      "prompt": "Retome de onde parou e teste fevereiro bissexto.",
+      "expected": "continue",
+      "rationale": "Mesmo parser e continuação explícita."
+    },
+    {
+      "id": "eval-10",
+      "language": "pt",
+      "previous_task": "Corrigir o parser de datas.",
+      "prompt": "Não é uma nova tarefa: falta testar o fuso horário.",
+      "expected": "continue",
+      "rationale": "Negação explícita com objetivo relacionado."
+    },
+    {
+      "id": "eval-11",
+      "language": "pt",
+      "previous_task": "Revisar exemplos de mensagens da documentação.",
+      "prompt": "No exemplo \"novo assunto: pagamentos\", corrija só a pontuação.",
+      "expected": "continue",
+      "rationale": "Marcador em citação, sem pedido de trocar tarefa."
+    },
+    {
+      "id": "eval-12",
+      "language": "pt",
+      "previous_task": "Corrigir o parser de datas.",
+      "prompt": "Nova tarefa não; continue a correção e atualize o teste correspondente.",
+      "expected": "continue",
+      "rationale": "Prefixo de fronteira negado e instrução composta relacionada."
+    },
+    {
+      "id": "eval-13",
+      "language": "en",
+      "previous_task": "Fix the date parser.",
+      "prompt": "Resume where you stopped and test leap-year February.",
+      "expected": "continue",
+      "rationale": "Explicit continuation of the same parser."
+    },
+    {
+      "id": "eval-14",
+      "language": "en",
+      "previous_task": "Fix the date parser.",
+      "prompt": "This is not a new task: the timezone test is still missing.",
+      "expected": "continue",
+      "rationale": "Explicitly negated boundary and related work."
+    },
+    {
+      "id": "eval-15",
+      "language": "en",
+      "previous_task": "Review documentation message examples.",
+      "prompt": "In the example \"new task: payments\", fix punctuation only.",
+      "expected": "continue",
+      "rationale": "Quoted marker is data, not a boundary request."
+    },
+    {
+      "id": "eval-16",
+      "language": "en",
+      "previous_task": "Fix the date parser.",
+      "prompt": "New task, no; keep fixing this parser and update its test.",
+      "expected": "continue",
+      "rationale": "Negated leading marker and related composite request."
+    },
+    {
+      "id": "eval-17",
+      "language": "pt",
+      "previous_task": "Corrigir a exportação de relatórios.",
+      "prompt": "Agora faça a parte de segurança.",
+      "expected": "ambiguous",
+      "rationale": "Não define se é parte da exportação ou trabalho independente."
+    },
+    {
+      "id": "eval-18",
+      "language": "pt",
+      "previous_task": "Corrigir a exportação de relatórios.",
+      "prompt": "Pensei em outra coisa, mas não abandone isso ainda.",
+      "expected": "ambiguous",
+      "rationale": "Mudança cogitada, sem nova tarefa definida ou confirmada."
+    },
+    {
+      "id": "eval-19",
+      "language": "pt",
+      "previous_task": "Corrigir a exportação de relatórios.",
+      "prompt": "O exemplo diz 'nova tarefa: autenticação'. Vamos fazer isso?",
+      "expected": "ambiguous",
+      "rationale": "Marcador citado e referente incerto."
+    },
+    {
+      "id": "eval-20",
+      "language": "pt",
+      "previous_task": "Corrigir a exportação de relatórios.",
+      "prompt": "Termine a exportação e cuide da integração depois.",
+      "expected": "ambiguous",
+      "rationale": "Instrução composta sem fronteira atual nem integração definida."
+    },
+    {
+      "id": "eval-21",
+      "language": "en",
+      "previous_task": "Fix report export.",
+      "prompt": "Do the security part now.",
+      "expected": "ambiguous",
+      "rationale": "May belong to export or be independent work."
+    },
+    {
+      "id": "eval-22",
+      "language": "en",
+      "previous_task": "Fix report export.",
+      "prompt": "I have something else in mind, but do not abandon this yet.",
+      "expected": "ambiguous",
+      "rationale": "Contemplated switch without a confirmed new objective."
+    },
+    {
+      "id": "eval-23",
+      "language": "en",
+      "previous_task": "Fix report export.",
+      "prompt": "The example says 'new topic: authentication'. Should we do that?",
+      "expected": "ambiguous",
+      "rationale": "Quoted marker with an uncertain referent."
+    },
+    {
+      "id": "eval-24",
+      "language": "en",
+      "previous_task": "Fix report export.",
+      "prompt": "Finish the export and handle the integration later.",
+      "expected": "ambiguous",
+      "rationale": "Composite request with no current boundary or defined integration."
+    }
+  ],
+  "evaluation": [
+    {
+      "id": "v2-eval-01",
+      "language": "pt",
+      "previous_task": "Ajustar os títulos do manual.",
+      "prompt": "Desenvolva um coletor de métricas para o servidor.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-02",
+      "language": "pt",
+      "previous_task": "Traduzir os rótulos da navegação.",
+      "prompt": "Investigue a lentidão das consultas de estoque.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-03",
+      "language": "pt",
+      "previous_task": "Corrigir uma célula da planilha.",
+      "prompt": "Projete uma fila de notificações por email.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-04",
+      "language": "pt",
+      "previous_task": "Revisar os exemplos de um tutorial.",
+      "prompt": "Preciso criar um exportador de notas fiscais.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-05",
+      "language": "pt",
+      "previous_task": "Renomear um parâmetro da biblioteca.",
+      "prompt": "Prepare um script para arquivar os backups antigos.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-06",
+      "language": "pt",
+      "previous_task": "Corrigir as bordas de um formulário.",
+      "prompt": "Implemente o cadastro de fornecedores no painel.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-07",
+      "language": "pt",
+      "previous_task": "Validar o importador de arquivos CSV.",
+      "prompt": "O importador está concluído. Monte um calendário de eventos.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-08",
+      "language": "pt",
+      "previous_task": "Ajustar uma regra de validação.",
+      "prompt": "Novo assunto: desenvolva um monitor de uso de disco.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-09",
+      "language": "en",
+      "previous_task": "Adjust headings in the manual.",
+      "prompt": "Develop a metrics collector for the server.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-10",
+      "language": "en",
+      "previous_task": "Translate navigation labels.",
+      "prompt": "Investigate slow inventory queries.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-11",
+      "language": "en",
+      "previous_task": "Fix a spreadsheet cell.",
+      "prompt": "Design an email notification queue.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-12",
+      "language": "en",
+      "previous_task": "Review tutorial examples.",
+      "prompt": "I need to create an invoice exporter.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-13",
+      "language": "en",
+      "previous_task": "Rename a library parameter.",
+      "prompt": "Prepare a script to archive old backups.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-14",
+      "language": "en",
+      "previous_task": "Fix form borders.",
+      "prompt": "Implement supplier registration in the dashboard.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-15",
+      "language": "en",
+      "previous_task": "Validate the CSV importer.",
+      "prompt": "The importer is complete. Build an events calendar.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-16",
+      "language": "en",
+      "previous_task": "Adjust a validation rule.",
+      "prompt": "New topic: develop a disk usage monitor.",
+      "expected": "new",
+      "rationale": "Objetivo independente e concreto; reconhecer antes de pedir confirmação da fronteira."
+    },
+    {
+      "id": "v2-eval-17",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Continue a validação do importador.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-18",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Agora verifique o resultado.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-19",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Adicione mais um teste para o importador.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-20",
+      "language": "pt",
+      "previous_task": "Documentar exemplos de mensagens.",
+      "prompt": "Traduza a frase citada: \"nova tarefa: cadastro de clientes\".",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-21",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Não comece outra tarefa; termine o teste atual.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-22",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Na mesma tarefa, atualize a mensagem de erro.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-23",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Ajuste o importador para rejeitar linhas vazias.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-24",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Nova tarefa: não. Continue a correção do importador.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-25",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "Continue validating the importer.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-26",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "Now check the result.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-27",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "Add another test for the importer.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-28",
+      "language": "en",
+      "previous_task": "Document message examples.",
+      "prompt": "Translate the quoted sentence: \"new topic: customer registration\".",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-29",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "Do not begin another task; finish the current test.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-30",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "Same task: update the error message.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-31",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "Adjust the importer to reject empty rows.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-32",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "New task: no. Continue fixing the importer.",
+      "expected": "continue",
+      "rationale": "Mesmo trabalho, referência explícita ou marcador tratado como dado/negação; preservar identidade e escolha."
+    },
+    {
+      "id": "v2-eval-33",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Também precisamos resolver aquela parte.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-34",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Continue o teste e talvez troque de projeto depois.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-35",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Ideia para o futuro: criar um painel.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-36",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "O texto diz \"crie outro banco\". É isso?",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-37",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Preciso de outro serviço.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-38",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Uma nova tarefa seria melhor?",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-39",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Não sei se a próxima etapa é independente.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-40",
+      "language": "pt",
+      "previous_task": "Corrigir o importador de arquivos CSV.",
+      "prompt": "Refatore o código e migre aquele sistema depois.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-41",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "We also need to sort out that part.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-42",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "Continue testing and perhaps switch projects later.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-43",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "An idea for later: build a dashboard.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-44",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "The text says \"create another database\". Is that it?",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-45",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "I need another service.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-46",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "Would a new task be better?",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-47",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "I do not know if the next step is independent.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    },
+    {
+      "id": "v2-eval-48",
+      "language": "en",
+      "previous_task": "Fix the CSV importer.",
+      "prompt": "Refactor the code and migrate that system later.",
+      "expected": "ambiguous",
+      "rationale": "Referente, intenção ou fronteira atual incertos; não transicionar nem classificar o modelo."
+    }
+  ]
+}
