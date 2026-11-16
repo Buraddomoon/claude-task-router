@@ -203,5 +203,7 @@ humana ou com regressão crítica e mantêm custo/tokens/tempo separados.
 Os testes e os três planos padrão não fazem inferência.
 
 Validação local final: `python3 -m unittest discover -s tests -v` —
-**118 testes aprovados** em Linux/Python 3.14.3. Os três dry-runs, a checagem
+**119 testes aprovados** em Linux/Python 3.14.3. Os três dry-runs, a checagem
 reproduzível do artefato histórico e `git diff --check` também passaram.
+Os totais da auditoria usam soma decimal para produzir o mesmo artefato nas
+versões suportadas do Python, cujos algoritmos de soma de floats diferem.

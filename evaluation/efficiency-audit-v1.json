@@ -61,9 +61,9 @@
             "total": 0.02230266
           },
           "seconds": {
-            "known": 34.153999999999996,
+            "known": 34.154,
             "complete": true,
-            "total": 34.153999999999996
+            "total": 34.154
           },
           "total_tokens": {
             "known": 26760,
@@ -161,9 +161,9 @@
           "execution_failures": 0,
           "quality_passed": 12,
           "cost_usd": {
-            "known": 0.0066763,
+            "known": 0.0066763000000000005,
             "complete": true,
-            "total": 0.0066763
+            "total": 0.0066763000000000005
           },
           "seconds": {
             "known": 30.6489,
@@ -271,9 +271,9 @@
             "total": 0.00540077
           },
           "seconds": {
-            "known": 24.728099999999998,
+            "known": 24.7281,
             "complete": true,
-            "total": 24.728099999999998
+            "total": 24.7281
           },
           "total_tokens": {
             "known": 22839,

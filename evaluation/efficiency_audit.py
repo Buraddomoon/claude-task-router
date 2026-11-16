@@ -1,6 +1,7 @@
 """Reproduce historical token/cost decomposition offline, without retuning."""
 
 import argparse
+from decimal import Decimal
 import hashlib
 import json
 from pathlib import Path
@@ -17,7 +18,10 @@ ARTIFACTS = ("real-results-v3.json", "real-results-v4.json", "real-results-v4-in
 def total(values, integer=False):
     values = list(values)
     valid = [number(v, integer) for v in values]
-    known = sum(v for v in valid if v is not None)
+    # Python 3.12 changed float sum(). Decimal strings keep the audit artifact
+    # byte/number stable across supported interpreters without dropping rows.
+    known = (sum(v for v in valid if v is not None) if integer else
+             float(sum((Decimal(str(v)) for v in valid if v is not None), Decimal(0))))
     return dict(known=known, complete=bool(valid) and all(v is not None for v in valid),
                 total=known if valid and all(v is not None for v in valid) else None)
 
@@ -53,8 +57,8 @@ def audit():
                              policy=source["policy"], planned_calls=source["planned_calls"],
                              stopped=source["stopped"], **analyze(source["records"])))
     return dict(protocol="historical-audit-v1", inference_calls=0, datasets=datasets,
-                known_historical_cost_usd=sum(d["arms"][arm]["cost_usd"]["known"]
-                                              for d in datasets for arm in ("baseline", "routed")),
+                known_historical_cost_usd=total(d["arms"][arm]["cost_usd"]["known"]
+                                                for d in datasets for arm in ("baseline", "routed"))["known"],
                 prospective_evaluation_status="pending_authorized_real_tasks_and_human_review",
                 token_reduction_proven=False, general_savings_proven=False,
                 policy_changed=False)

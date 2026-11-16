@@ -4,10 +4,15 @@ import unittest
 from unittest.mock import patch
 
 from evaluation.real import execute, quality, summarize
-from evaluation.efficiency_audit import analyze, audit
+from evaluation.efficiency_audit import analyze, audit, total
 
 
 class RealEvaluationTests(unittest.TestCase):
+    def test_audit_decimal_totals_are_stable_across_python_float_sum_versions(self):
+        self.assertEqual(total([.1, .2, .3])["total"], .6)
+        self.assertEqual(total([.1, None])["known"], .1)
+        self.assertIsNone(total([.1, None])["total"])
+
     def test_historical_token_increase_is_cache_not_price_or_output(self):
         report = audit()
         v4 = report["datasets"][1]
