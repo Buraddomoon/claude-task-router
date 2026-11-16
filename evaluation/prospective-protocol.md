@@ -100,3 +100,15 @@ ficam localmente para revisão. Investigar desperdícios da v4 separadamente,
 sem tratar reanálise de casos conhecidos como nova amostra. Qualquer ajuste
 da política após observar esta amostra a transforma em desenvolvimento;
 congelar outro conjunto reservado antes de nova alegação independente.
+
+## Verificação simples autorizada em 16/11/2026
+
+O usuário autorizou somente testes simples com baixo gasto. Antes da chamada,
+define-se smoke técnico separado: uma tarefa pública trivial, dois turnos
+new/resume, no braço roteado, sem ferramentas, um turno nativo por chamada,
+timeout de 90 s, teto por chamada US$ 0,025 e agregado US$ 0,05 estimados.
+Verificar UUID persistido, uma classificação no new e zero no resume,
+proveniência estável e subtração de contadores cumulativos. Os prompts
+pedem uma resposta fixa curta, conferida por igualdade. Não ajustar regras
+com base nesse smoke. Essa autorização não abrange a coorte de US$ 8,00
+acima. O smoke não é ensaio de economia nem substitui tarefas/revisão humana.
