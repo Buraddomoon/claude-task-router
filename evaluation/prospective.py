@@ -297,7 +297,10 @@ def run(manifest, lock, protocol, binary, output, work_root):
                         if spent + protocol["max_cost_per_call_usd"] > protocol["max_cost_usd"]:
                             report["stopped"] = "budget_headroom_exhausted"
                             return report
-                        prompt = Path(source).read_text(encoding="utf-8")
+                        # Match cli.read_prompt: UTF-8 bytes, no universal
+                        # newline conversion that would give the arms
+                        # different requests for CRLF-authored files.
+                        prompt = Path(source).read_bytes().decode("utf-8")
                         telemetry = None
                         if arm == "baseline":
                             command = [binary, "--model", choice, "--session-id" if turn == 1 else "--resume", session,

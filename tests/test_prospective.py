@@ -267,6 +267,7 @@ class ProspectiveTests(unittest.TestCase):
             binary.write_text("#!/usr/bin/env python3\nimport json,sys\n" +
                 "if sys.argv[1:] == ['--version']:\n print('2.1.325 (Claude Code)'); raise SystemExit(0)\n" +
                 "a=sys.argv; n=2 if '--resume' in a else 1\n" +
+                "if not a[-1].endswith('\\r\\n'): raise SystemExit(4)\n" +
                 "session=a[a.index('--resume' if n==2 else '--session-id')+1]\n" +
                 "m=a[a.index('--model')+1]; m=m if m.startswith('claude-') else 'claude-'+m+'-test-001'\n" +
                 "print(json.dumps(dict(session_id=session,subtype='success',total_cost_usd=.001*n,result='OK',modelUsage={m:dict(inputTokens=10*n,outputTokens=2*n,cacheCreationInputTokens=5*n,cacheReadInputTokens=20*n)})))\n")
