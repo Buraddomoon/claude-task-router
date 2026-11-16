@@ -1,0 +1,22 @@
+{
+  "id": "prospective-v1",
+  "parent_issue": 31,
+  "categories": {"fix": 2, "feature": 2, "refactor": 2, "investigation": 2},
+  "minimum_projects": 2,
+  "repetitions": 1,
+  "turns_per_task": 2,
+  "baseline": "sonnet",
+  "effort": "low",
+  "max_turns_per_call": 12,
+  "timeout_seconds": 180,
+  "max_cost_per_call_usd": 0.25,
+  "max_cost_usd": 8.0,
+  "max_retries": 0,
+  "critical_regressions_allowed": 0,
+  "functional_failures_allowed": 0,
+  "human_review_required": true,
+  "minimum_observed_reduction_percent": 0,
+  "cache_policy": "natural-observed-no-provider-policy-changes",
+  "order": "alternate-by-task-and-repetition",
+  "inference": "descriptive-sample-only"
+}
