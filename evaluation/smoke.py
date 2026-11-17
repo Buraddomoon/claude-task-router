@@ -11,7 +11,7 @@ import tempfile
 from claude_task_router.config import Config
 from claude_task_router.launcher import executable
 from evaluation.measurements import stable
-from evaluation.prospective import call, digest, sources_hash
+from evaluation.prospective import CohortStopped, call, digest, sources_hash
 from evaluation.real import ROOT, save
 
 PROMPTS = ("Retorne somente OK.", "Repita exatamente a mesma resposta curta anterior.")
@@ -75,6 +75,8 @@ def main(argv=None):
                       all(stable(r["client_before"], r["client_after"]) for r in rows) and
                       rows[0]["client_before"] == rows[1]["client_before"] and
                       rows[0]["session_id"] == rows[1]["session_id"])
+        except CohortStopped:
+            pass
         except KeyboardInterrupt:
             report["stopped"] = "interrupted"
         finally:

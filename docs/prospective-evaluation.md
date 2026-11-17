@@ -202,6 +202,23 @@ Os verificadores de qualidade impedem conclusão favorável sem revisão
 humana ou com regressão crítica e mantêm custo/tokens/tempo separados.
 Os testes e os três planos padrão não fazem inferência.
 
+### Interrupção ao detectar deriva antes da próxima chamada
+
+O runner compara a proveniência do cliente com a primeira chamada da coorte
+antes de cada spawn. Versão/SHA-256 ausentes ou diferentes interrompem o
+ensaio antes de nova inferência. O mesmo vale para fontes diferentes do hash
+congelado. A interrupção preserva as tentativas anteriores e seus custos,
+sem criar uma tentativa fictícia para um processo que não foi iniciado.
+Mudanças durante uma chamada continuam registradas junto ao consumo dela;
+mudanças de modelo efetivo para o mesmo alias também invalidam a medição e
+impedem o próximo turno. O smoke usa a mesma proteção.
+
+Regressões offline verificam ausência de spawn após deriva, conservação do
+gasto já conhecido, aceitação do turno anterior e conclusão inconclusiva.
+São verificações do harness, sem novas evidências de economia ou qualidade
+em tarefas reais. #35 e #37 continuam dependendo da coorte autorizada e da
+revisão humana descritas acima.
+
 Validação local final: `python3 -m unittest discover -s tests -v` —
 **119 testes aprovados** em Linux/Python 3.14.3. Os três dry-runs, a checagem
 reproduzível do artefato histórico e `git diff --check` também passaram.
