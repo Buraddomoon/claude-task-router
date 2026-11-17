@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 from evaluation.measurements import marginal, provenance, snapshot, stable
-from evaluation.prospective import PROTOCOL, call, digest, freeze, main, run, summarize
+from evaluation.prospective import CohortStopped, PROTOCOL, call, digest, freeze, main, run, summarize
 from evaluation.real import ROOT, execute
 from evaluation.smoke import main as smoke_main
 
@@ -65,6 +65,62 @@ def private_manifest(root):
 
 
 class MeasurementTests(unittest.TestCase):
+    def test_unverified_client_prevents_first_inference_without_fabricating_attempt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            report = dict(records=[])
+            with patch("evaluation.prospective.provenance", return_value=dict(version=None, binary_sha256=None)), \
+                    patch("evaluation.prospective.execute") as execute, self.assertRaises(CohortStopped):
+                call(report, output, [], ROOT, {}, "binary", case="T01", arm="baseline",
+                     repetition=1, turn=1, choice="sonnet")
+            execute.assert_not_called()
+            saved = json.loads(output.read_bytes())
+            self.assertEqual(saved["records"], [])
+            self.assertEqual(saved["stopped"], "client_changed_or_unverified")
+
+    def test_environment_drift_stops_before_next_inference_and_preserves_spend(self):
+        changed_client = dict(version="2.1.326", binary_sha256="b" * 64)
+        for client, source, reason in (
+            (changed_client, "a" * 64, "client_changed_or_unverified"),
+            (CLIENT, "b" * 64, "router_or_harness_sources_changed"),
+        ):
+            with self.subTest(reason=reason), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "report.json"
+                report = dict(records=[])
+                with patch("evaluation.prospective.provenance", return_value=CLIENT), \
+                        patch("evaluation.prospective.sources_hash", return_value="a" * 64), \
+                        patch("evaluation.prospective.execute", return_value=(0, json.dumps(payload()))) as execute:
+                    previous, _ = call(report, output, [], ROOT, {}, "binary", case="T01", arm="baseline",
+                                       repetition=1, turn=1, choice="sonnet")
+                    self.assertEqual(execute.call_count, 1)
+                first = copy.deepcopy(report["records"])
+                with patch("evaluation.prospective.provenance", return_value=client), \
+                        patch("evaluation.prospective.sources_hash", return_value=source), \
+                        patch("evaluation.prospective.execute") as execute, self.assertRaises(CohortStopped):
+                    call(report, output, [], ROOT, {}, "binary", case="T01", arm="baseline",
+                         repetition=1, turn=2, choice="sonnet", previous=previous)
+                execute.assert_not_called()
+                saved = json.loads(output.read_bytes())
+                self.assertEqual(saved["records"], first)
+                self.assertEqual(saved["stopped"], reason)
+                self.assertEqual(saved["records"][0]["cli_estimated_cost_usd"], .02)
+
+    def test_alias_drift_preserves_the_call_cost_and_invalidates_measurement(self):
+        changed = payload()
+        changed["modelUsage"] = {"claude-sonnet-5-6": changed["modelUsage"].pop("claude-sonnet-5-5")}
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            report = dict(records=[])
+            with patch("evaluation.prospective.provenance", return_value=CLIENT), \
+                    patch("evaluation.prospective.execute", side_effect=[(0, json.dumps(p)) for p in (payload(), changed)]):
+                for case in ("T01", "T02"):
+                    call(report, output, [], ROOT, {}, "binary", case=case, arm="baseline",
+                         repetition=1, turn=1, choice="sonnet")
+            saved = json.loads(output.read_bytes())
+            self.assertEqual(len(saved["records"]), 2)
+            self.assertEqual(sum(r["cli_estimated_cost_usd"] for r in saved["records"]), .04)
+            self.assertIn("effective_model_changed_within_cohort", saved["records"][-1]["measurement_issues"])
+
     def test_resume_subtracts_history_per_model_and_preserves_cache(self):
         initial = snapshot(payload())
         current = snapshot(payload(cost=.027, input_tokens=13, output=8, cache_write=24, cache_read=200))
@@ -164,6 +220,26 @@ class MeasurementTests(unittest.TestCase):
 
 
 class ProspectiveTests(unittest.TestCase):
+    def test_runner_stops_at_client_drift_and_retains_completed_acceptance_and_cost(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest, _ = private_manifest(root)
+            protocol = json.loads(PROTOCOL.read_bytes())
+            lock = freeze(manifest, protocol)
+            output = root / "report.json"
+            changed_client = dict(version="2.1.326", binary_sha256="b" * 64)
+            with patch("evaluation.prospective.uuid.uuid4", return_value=SESSION), \
+                    patch("evaluation.prospective.provenance", side_effect=[CLIENT, CLIENT, changed_client]), \
+                    patch("evaluation.prospective.execute", side_effect=[(0, json.dumps(payload())), (0, "")]) as execute:
+                report = run(manifest, lock, protocol, "binary", output, root / "runs")
+            self.assertEqual(execute.call_count, 2)  # One inference, then its functional check.
+            self.assertEqual(report["stopped"], "client_changed_or_unverified")
+            self.assertEqual(len(report["records"]), 1)
+            self.assertTrue(report["records"][0]["functional_passed"])
+            self.assertEqual(report["summary"]["totals"]["baseline"]["known_cost_usd"], .02)
+            self.assertEqual(report["summary"]["verdict"], "inconclusive")
+            self.assertEqual(json.loads(output.read_bytes()), report)
+
     def test_observed_router_new_resume_and_marginal_accounting_without_inference(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

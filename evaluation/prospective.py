@@ -25,6 +25,10 @@ from evaluation.real import ROOT, execute, save
 PROTOCOL = Path(__file__).with_name("prospective-protocol.json")
 
 
+class CohortStopped(Exception):
+    """The frozen environment no longer permits another inference call."""
+
+
 def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
@@ -119,6 +123,19 @@ def call(report, output, command, project, env, binary, *, case, arm, repetition
     """Persist the attempt BEFORE spawn; unknown consumption survives crashes."""
     before = provenance(binary)
     source_before = sources_hash()
+    initial_client = report.setdefault("initial_client", before)
+    expected_sources = report.get("lock", {}).get("source_sha256") or report.setdefault("source_sha256", source_before)
+    reason = None
+    if not stable(initial_client, before):
+        reason = "client_changed_or_unverified"
+    elif source_before != expected_sources:
+        reason = "router_or_harness_sources_changed"
+    if reason:
+        # No process was spawned: retain previous attempts and their costs,
+        # without fabricating a new attempt with unknown consumption.
+        report["stopped"] = reason
+        save(output, report)
+        raise CohortStopped(reason)
     row = dict(case=case, arm=arm, repetition=repetition, turn=turn,
                requested_model=choice, session_id=expected_session, status="started",
                execution_ok=False, model_confirmed=False, functional_passed=None,
@@ -148,7 +165,6 @@ def call(report, output, command, project, env, binary, *, case, arm, repetition
                session_id=current["session_id"],
                execution_ok=code == 0 and payload.get("subtype") == "success" and not payload.get("is_error"))
     row["source_after_sha256"] = sources_hash()
-    expected_sources = report.get("lock", {}).get("source_sha256", report.get("source_sha256"))
     if row["source_after_sha256"] != source_before or expected_sources and source_before != expected_sources:
         row["measurement_issues"].append("router_or_harness_sources_changed")
     if expected_session and current["session_id"] != expected_session:
@@ -181,6 +197,10 @@ def call(report, output, command, project, env, binary, *, case, arm, repetition
             row["measurement_issues"].append("router_session_not_confirmed")
     row["model_confirmed"] = bool(choice and row["effective_models"]) and all(
         matches_choice(choice, m) for m in row["effective_models"])
+    prior_models = {model for prior in report["records"][:-1]
+                    if prior["requested_model"] == choice for model in prior.get("effective_models", [])}
+    if prior_models and set(row["effective_models"]) != prior_models:
+        row["measurement_issues"].append("effective_model_changed_within_cohort")
     save(output, report)
     return current, payload.get("result", "")
 
@@ -334,6 +354,8 @@ def run(manifest, lock, protocol, binary, output, work_root):
                         row["functional_passed"] = code == 0
                         row["acceptance_exit_code"] = code
                         save(output, report)
+    except CohortStopped:
+        pass  # The pre-spawn guard already saved the precise stop reason.
     except KeyboardInterrupt:
         report["stopped"] = "interrupted"
     except (OSError, ValueError, subprocess.SubprocessError, tarfile.TarError):
